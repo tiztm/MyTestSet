@@ -1,3 +1,4 @@
+
 import com.rui.utils.HttpclientUtil;
 
 import java.util.*;
@@ -11,6 +12,8 @@ import org.apache.http.client.HttpClient;
 public class SuiKindleBooks {
 
     public static void main(String[] args) throws Exception {
+
+
 
         String panUrl = "http://yun.baidu.com/s/";
         int jiange = 60;

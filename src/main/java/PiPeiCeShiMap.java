@@ -13,7 +13,6 @@ public class PiPeiCeShiMap {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		DateSpanUtil dsu = new DateSpanUtil();
 		Map<String, String> m = new HashMap<String, String>();
 		for (int i = 0; i < 1000000; i++) {
