@@ -7,7 +7,7 @@ public class NginxLogsEntity {
 
     @Override
     public String toString() {
-        return logUrl+","+lastShow+","+showTime+","+allCostTime+","+allCostTime/showTime;
+        return logUrl+","+lastShow+","+allShowTime+","+showTime+","+allCostTime+","+allCostTime/showTime+","+(showTime+0.0)/allShowTime;
     }
 
     private String logUrl;
@@ -15,6 +15,8 @@ public class NginxLogsEntity {
     private double allCostTime;
 
     private int showTime;
+
+    private int allShowTime;
 
     private String lastShow;
 
@@ -49,5 +51,13 @@ public class NginxLogsEntity {
 
     public void setAllCostTime(double allCostTime) {
         this.allCostTime = allCostTime;
+    }
+
+    public int getAllShowTime() {
+        return allShowTime;
+    }
+
+    public void setAllShowTime(int allShowTime) {
+        this.allShowTime = allShowTime;
     }
 }

@@ -17,15 +17,17 @@ import java.util.*;
  */
 public class NginxLogsAna {
 
-    private static final String[] logPath ={"F:\\\\jipei.log"};// {"F:\\jipei.log", "F:\\hujiao.log", "F:\\jiesuan.log"};
+    private static final String[] logPath ={"jipei.log", "hujiao.log", "jiesuan.log"};
 
-    private static final int MIN_SHOW_TIME = 1;
+    private static final int MIN_SHOW_TIME = 2;
 
     private static final double MIN_SHOW_SECOND = 1.5;
 
     private static Map<String, NginxLogsEntity> nleMap = new HashMap<String, NginxLogsEntity>();
 
     private static SimpleDateFormat dateSdf = new SimpleDateFormat("dd/MMM/yyyy",Locale.US);
+
+    private static SimpleDateFormat fileSdf = new SimpleDateFormat("yyyy-MM-dd",Locale.US);
 
     private static SimpleDateFormat minSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
@@ -43,34 +45,84 @@ public class NginxLogsAna {
 
     private static String nowvisitInSecondTime = "";
 
+    private static int maxPostvisitInSecond = 0;
+
+    private static String maxPostvisitInSecondTime = "";
+
+    private static int nowPostvisitInSecond = 0;
+
+    private static String nowPostvisitInSecondTime = "";
+
     private static Map<String, Integer> urlCountMap = new HashMap<String, Integer>();
+
+    /**
+     * 在当前路径下存放 content
+     * @param fileName
+     * @param content
+     */
+    public static void log2File(String fileName,String content){
+
+//        File directory = new File("");//设定为当前文件夹
+//        String absolutePath = directory.getAbsolutePath();
+//        System.out.println(absolutePath);//获取绝对路径
+
+
+        FileOutputStream out = null;
+        File file;
+        try {
+
+            File fileDat = new File(fileName);
+
+            out = new FileOutputStream(fileDat);
+            byte[] contentInBytes = content.getBytes();
+            out.write(contentInBytes);
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 
     public static void main(String[] args) throws Exception {
 
         Date checkDate = new Date();
+//        String s = "1235";
+//
+//        String format = fileSdf.format(checkDate);
+//
+//        log2File(format+".txt",s);
 
-        int daysBack = -5;
+
+       // 根据输入的值计算要统计的天
+
+        int daysBack = -1;
         if(args.length>0&&args[0]!=null)
         {
             daysBack = Integer.parseInt(args[0]);
         }
-
         checkDate =  DateUtil.addDaysToDate(checkDate,daysBack);
 
 
-
-//        Date checkDate = new Date();
-//        System.out.println(sdf.format(checkDate));
-//
-//        String testTime = "10.10.10.9 - - [17/Feb/2016:11:31:13 +0800]";
-//        Date d = spanTime(testTime);
-
-        readNginxLog(dateSdf.format(checkDate));
+        readNginxLog(checkDate);
 
 
     }
 
+    /**
+     * 解析Nignx的时间格式
+     * @param testTime
+     * @return
+     */
     private static Date spanTime(String testTime) {
         List<String> patternString = HTMLUtil.getPatternString(testTime, "- \\[.* \\+08");
         if(patternString.size()<1) return null;
@@ -91,48 +143,94 @@ public class NginxLogsAna {
     /**
      * 处理Nginx的访问日志
      */
-    private static void readNginxLog(String checkDate) {
+    private static void readNginxLog(Date checkDate) {
+
+        String checkDateStr = dateSdf.format(checkDate);
+
         DateSpanUtil dsu = new DateSpanUtil();
 
         for (int i = 0; i < logPath.length; i++) {
             String o = logPath[i];
             File f = new File(o);
-            readFileByLines(f,checkDate);
+            readFileByLines(f,checkDateStr);
             dsu.getSpanDate();
         }
-        System.out.println(checkDate+"的当天访问情况总结：");
+
+        String format = fileSdf.format(checkDate);
+        out2File.append("总结-"+format+"的当天访问情况："+"\n");
         pringNleMap();
+        System.out.println(out2File.toString());
+        log2File(format+"_common.txt",out2File.toString());
+        log2File(format+"_slow.csv",out2QingqiuFile.toString());
+
+
     }
+
+    private static StringBuffer out2File = new StringBuffer();
+
+    private static StringBuffer out2QingqiuFile = new StringBuffer();
 
     private static void pringNleMap() {
 
 
-        System.out.println("访问数："+allvisitTimes);
+        out2File.append("访问数："+allvisitTimes+"\n");
 
-        System.out.println("POST访问数："+allvisitActionTimes);
+        out2File.append("POST访问数："+allvisitActionTimes+"\n");
 
-        System.out.println("最大每秒访问数："+maxvisitInSecondTime);
+        out2File.append("最大每秒访问数："+maxvisitInSecondTime+"\n");
 
-        System.out.println("最大每秒访问时间："+maxvisitInSecond);
+        out2File.append("最大每秒访问时间："+maxvisitInSecond+"\n");
+
+        out2File.append("最大POST每秒访问数："+maxPostvisitInSecondTime+"\n");
+
+        out2File.append("最大POST每秒访问时间："+maxPostvisitInSecond+"\n");
 
 
+        out2File.append("---"+"\n");
+        out2File.append("最慢的十个较慢请求"+"\n");
 
-        System.out.println("---");
-        System.out.println("较慢请求");
         Set<String> strings = nleMap.keySet();
+        List<NginxLogsEntity> nleList = new ArrayList<NginxLogsEntity>();
+
+
         for (String s : strings  ) {
             NginxLogsEntity nginxLogsEntity = nleMap.get(s);
+
             if (nginxLogsEntity.getShowTime() > MIN_SHOW_TIME) {
-                System.out.println(nginxLogsEntity.toString());
+                nleList.add(nginxLogsEntity);
             }
         }
-        System.out.println("---");
-        System.out.println("访问情况"+urlCountMap.size());
-//        Set<String> urlCount = urlCountMap.keySet();
-//        for (String s2:urlCount)
-//        {
-//            System.out.println(strings+","+urlCountMap.get(s2));
-//        }
+
+        // 按出现自出倒序
+        Collections.sort(nleList, new Comparator<NginxLogsEntity>() {
+            public int compare(NginxLogsEntity arg0, NginxLogsEntity arg1) {
+                int hits0 = arg0.getShowTime();
+                int hits1 = arg1.getShowTime();
+                if (hits1 > hits0) {
+                    return 1;
+                } else if (hits1 == hits0) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            }
+        });
+
+        int countSlow = 0;
+        out2QingqiuFile.append("地址,最后一次访问时间,总访问次数,慢访问次数,总慢访问时间,平均慢访问响应时间,慢访问比率"+ "\n");
+        for (NginxLogsEntity nle:nleList){
+            if(countSlow<10) {
+                out2File.append(nle.toString() + "\n");
+                countSlow++;
+            }
+            out2QingqiuFile.append(nle.toString()+"\n");
+        }
+
+
+
+        //System.out.println("---");
+        //System.out.println("访问情况"+urlCountMap.size());
+
 
     }
 
@@ -142,7 +240,27 @@ public class NginxLogsAna {
      */
     public static void anaAllvisiteCost(Date d,String url) {
         allvisitTimes ++;
-        if (url.startsWith("POST")) allvisitActionTimes++;
+        if (url.startsWith("POST"))
+        {
+            allvisitActionTimes++;
+
+
+            if(nowPostvisitInSecondTime.equals(d.toString()))
+            {
+                nowPostvisitInSecond ++;
+            }
+            else
+            {
+                if(maxPostvisitInSecond<nowPostvisitInSecond)
+                {
+                    maxPostvisitInSecondTime = nowPostvisitInSecondTime;
+                    maxPostvisitInSecond = nowPostvisitInSecond;
+                }
+                nowPostvisitInSecondTime = d.toString();
+                nowPostvisitInSecond = 0;
+            }
+
+        }
         String format = minSdf.format(d);
 
 
@@ -160,6 +278,9 @@ public class NginxLogsAna {
             nowvisitInSecondTime = d.toString();
             nowvisitInSecond = 0;
         }
+
+
+
 
         Integer count = urlCountMap.get(format);
         if (count==null)
@@ -195,6 +316,7 @@ public class NginxLogsAna {
         if (split.length == 8) {
             Date date = spanTime(split[0]);
 
+            if(date==null) return;
             anaAllvisiteCost(date,split[1]);
 
 
@@ -202,31 +324,48 @@ public class NginxLogsAna {
             String s = split[7];
             s = s.replaceAll("\"", "");
             Double timeIns = Double.parseDouble(s);
-            if (timeIns >MIN_SHOW_SECOND) {
+
                 List<String> patternString = HTMLUtil.getPatternString(split[1], "(/.*){1,4}( HTTP)");
                 if (patternString.size() < 1) {
                     System.out.println(split[1] + " - " + timeIns);
                     return;
                 }
+
                 String pStr = patternString.size() > 0 ? patternString.get(0) : "";//split[1];
                 int lastIndexOf = pStr.lastIndexOf("?");
                 if (lastIndexOf > 0)
                     pStr = pStr.substring(0, lastIndexOf);
+
+
                 NginxLogsEntity nginxLogsEntity = nleMap.get(pStr);
 
                 if (nginxLogsEntity == null) {
                     NginxLogsEntity nle = new NginxLogsEntity();
                     nle.setLogUrl(pStr);
+
+                    if (timeIns >MIN_SHOW_SECOND) {
                     nle.setAllCostTime(timeIns);
                     nle.setShowTime(1);
                     nle.setLastShow(date +"");
+                    }
+                    else
+                    {
+                        nle.setAllCostTime(0);
+                        nle.setShowTime(0);
+                        nle.setLastShow("");
+                    }
+                    nle.setAllShowTime(1);
+
                     nleMap.put(pStr, nle);
                 } else {
-                    nginxLogsEntity.setShowTime(nginxLogsEntity.getShowTime() + 1);
-                    nginxLogsEntity.setLastShow(date +"");
-                    nginxLogsEntity.setAllCostTime(nginxLogsEntity.getAllCostTime() + timeIns);
+                    nginxLogsEntity.setAllShowTime(nginxLogsEntity.getAllShowTime() + 1);
+                    if (timeIns >MIN_SHOW_SECOND) {
+                        nginxLogsEntity.setShowTime(nginxLogsEntity.getShowTime() + 1);
+                        nginxLogsEntity.setLastShow(date + "");
+                        nginxLogsEntity.setAllCostTime(nginxLogsEntity.getAllCostTime() + timeIns);
+                    }
                 }
-            }
+
         }
 
     }
