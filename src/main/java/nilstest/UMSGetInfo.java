@@ -1,23 +1,17 @@
+package nilstest;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import com.rui.utils.HTMLUtil;
 import com.rui.utils.HttpclientUtil;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
 
 public class UMSGetInfo {
 
@@ -41,10 +35,10 @@ public class UMSGetInfo {
 				"gbk", httpclient);
 		String s2 = "";
 		String s3 = "";
-		File f = new File("d:/ums_user.txt");
-		File f2 = new File("d:/ums_user_pro.txt");
+		File f = new File("f:/ums_user.txt");
+		File f2 = new File("f:/ums_user_pro.txt");
 
-		for (int pageIndex = 0; pageIndex < 150; pageIndex++) {
+		for (int pageIndex = 0; pageIndex < 127; pageIndex++) {
 			String entityBody = "%3CROOT%3E%3CName%3Ewsy.bussiness.Dwsd.queryHyzl%3C/Name%3E%3CArguments%3E%3Chybh%3E%3C/hybh%3E%3Chymc%3E%3C/hymc%3E%3Cklb%3E%3C/klb%3E%3CcompanyId%3E002%3C/companyId%3E%3Chysrq%3E%3C/hysrq%3E%3Chysrz%3E%3C/hysrz%3E%3CpageIndex%3E"
 					+ pageIndex + "%3C/pageIndex%3E%3C/Arguments%3E%3C/ROOT%3E";
 			String temp = HttpclientUtil.postBody(
@@ -108,7 +102,6 @@ public class UMSGetInfo {
 			bufferWritter.close();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -124,7 +117,6 @@ public class UMSGetInfo {
 			bufferWritter.close();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

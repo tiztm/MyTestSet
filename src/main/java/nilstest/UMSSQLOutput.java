@@ -1,3 +1,5 @@
+package nilstest;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,8 +30,9 @@ public class UMSSQLOutput {
 
 		System.out.println("123");
 		
-		outCus();
-		
+		//outCus();
+		outShanping();
+		outPro();
  
 	}
 	
@@ -312,6 +315,8 @@ public class UMSSQLOutput {
 	                	if(split[4].equals("种烫睫毛"))  split[4] = "3";
 	                	if(split[4].equals("脚部护理"))  split[4] = "2";
 	                	if(split[4].equals("手部护理"))  split[4] = "1";
+						if(split[4].equals("点心类"))  split[4] = "7";
+						if(split[4].equals("饮料类"))  split[4] = "8";
 	                	
 	                	
 	                	String replaceAll = ygxx.replaceAll("_type", split[4])

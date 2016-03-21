@@ -1,7 +1,8 @@
+package nilstest;
+
 import com.rui.utils.DateUtil;
 import com.rui.utils.HTMLUtil;
 import entity.MybatisLogsEntity;
-import entity.NginxLogsEntity;
 
 import java.io.*;
 import java.text.ParseException;
@@ -18,13 +19,13 @@ public class MyBatisLogAna {
 
     private final static String LOG_FILE_NAME = "hlg_mybatis.log.";
 
-    private static Map<String, MybatisLogsEntity> tempmleMap = new HashMap<>();
+    private static Map<String, MybatisLogsEntity> tempmleMap = new HashMap<String, MybatisLogsEntity>();
 
 
-    private static Map<String, MybatisLogsEntity> mleMap = new HashMap<>();
+    private static Map<String, MybatisLogsEntity> mleMap = new HashMap<String, MybatisLogsEntity>();
 
 
-    private static Map<String, MybatisLogsEntity> mleMapWithOutParam = new HashMap<>();
+    private static Map<String, MybatisLogsEntity> mleMapWithOutParam = new HashMap<String, MybatisLogsEntity>();
 
 
     private static SimpleDateFormat fileSdf = new SimpleDateFormat("yyyy-MM-dd");
