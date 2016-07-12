@@ -31,7 +31,7 @@ public class UMSSQLOutput {
 		System.out.println("123");
 		
 		//outCus();
-		outShanping();
+		//outShanping();
 		outPro();
  
 	}

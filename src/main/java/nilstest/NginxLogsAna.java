@@ -18,11 +18,11 @@ import java.util.*;
  */
 public class NginxLogsAna {
 
-    private static final String[] logPath ={"jipei.log", "hujiao.log", "jiesuan.log"};
+    private static final String[] logPath ={"F://jipei.log"};
 
     private static final int MIN_SHOW_TIME = 2;
 
-    private static final double MIN_SHOW_SECOND = 1.5;
+    private static final double MIN_SHOW_SECOND = 0.1;
 
     private static Map<String, NginxLogsEntity> nleMap = new HashMap<String, NginxLogsEntity>();
 
@@ -106,7 +106,7 @@ public class NginxLogsAna {
 
        // 根据输入的值计算要统计的天
 
-        int daysBack = -1;
+        int daysBack = -100;
         if(args.length>0&&args[0]!=null)
         {
             daysBack = Integer.parseInt(args[0]);

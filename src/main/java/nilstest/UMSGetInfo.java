@@ -38,7 +38,7 @@ public class UMSGetInfo {
 		File f = new File("f:/ums_user.txt");
 		File f2 = new File("f:/ums_user_pro.txt");
 
-		for (int pageIndex = 0; pageIndex < 127; pageIndex++) {
+		for (int pageIndex = 0; pageIndex < 129; pageIndex++) {
 			String entityBody = "%3CROOT%3E%3CName%3Ewsy.bussiness.Dwsd.queryHyzl%3C/Name%3E%3CArguments%3E%3Chybh%3E%3C/hybh%3E%3Chymc%3E%3C/hymc%3E%3Cklb%3E%3C/klb%3E%3CcompanyId%3E002%3C/companyId%3E%3Chysrq%3E%3C/hysrq%3E%3Chysrz%3E%3C/hysrz%3E%3CpageIndex%3E"
 					+ pageIndex + "%3C/pageIndex%3E%3C/Arguments%3E%3C/ROOT%3E";
 			String temp = HttpclientUtil.postBody(
