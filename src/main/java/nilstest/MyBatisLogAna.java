@@ -2,7 +2,7 @@ package nilstest;
 
 import com.rui.utils.DateUtil;
 import com.rui.utils.HTMLUtil;
-import entity.MybatisLogsEntity;
+import nilstest.entity.MybatisLogsEntity;
 
 import java.io.*;
 import java.text.ParseException;

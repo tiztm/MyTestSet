@@ -1,4 +1,4 @@
-package entity;
+package nilstest.entity;
 
 import java.util.Date;
 

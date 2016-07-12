@@ -1,4 +1,4 @@
-package entity;
+package nilstest.entity;
 
 /**
  * Created by nilszhang on 2016/2/17.

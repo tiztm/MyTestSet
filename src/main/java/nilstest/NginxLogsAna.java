@@ -3,7 +3,7 @@ package nilstest;
 import com.rui.utils.DateSpanUtil;
 import com.rui.utils.DateUtil;
 import com.rui.utils.HTMLUtil;
-import entity.NginxLogsEntity;
+import nilstest.entity.NginxLogsEntity;
 
 import java.io.*;
 import java.text.ParseException;
