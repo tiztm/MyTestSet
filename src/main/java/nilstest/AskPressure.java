@@ -9,7 +9,7 @@ package nilstest;
         import java.net.URL;
 
 public class AskPressure {
-    private static String url = "http://localhost:8080/";
+    private static String url = "http://www.eqiyun.cn/";
     private static Integer error = 0;
     private static Integer threads = 800;
     private static Long startTime;
