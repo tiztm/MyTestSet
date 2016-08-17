@@ -38,7 +38,7 @@ public class fastprint extends JPanel {
     public fastprint(final String url, final int maxWidth, final int maxHeight) {
         super(new BorderLayout());
         JPanel webBrowserPanel = new JPanel(new BorderLayout());
-        final String fileName = "D:\\test\\" + System.currentTimeMillis() + ".jpg";
+        final String fileName = "e:\\test\\" + System.currentTimeMillis() + ".jpg";
 
         final JWebBrowser webBrowser = new JWebBrowser(null);
         webBrowser.setBarsVisible(false);
@@ -54,7 +54,8 @@ public class fastprint extends JPanel {
                  if (e.getWebBrowser().getLoadingProgress() == 100) {
                      try {
 
-                         webBrowser.executeJavascript("n.pageDown();");
+                         webBrowser.executeJavascript("alert(seajs.use('app/reader/page_control.js'));");
+                         webBrowser.executeJavascript("alert(seajs1.use('app/reader/page_control.js'));");
 
                         Thread.sleep(600);
                          NativeComponent nativeComponent = webBrowser
@@ -105,7 +106,7 @@ public class fastprint extends JPanel {
                 frame.setSize(P_WID, P_HEIGHT);
                 frame.invalidate();
                 frame.pack();
-                frame.setVisible(true);//设置是否可见
+                frame.setVisible(false);//设置是否可见
 
                 System.out.println("---------------end----------");
             }
