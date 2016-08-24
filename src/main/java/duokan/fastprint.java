@@ -11,6 +11,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 
 import javax.imageio.ImageIO;
@@ -33,27 +35,28 @@ public class fastprint extends JPanel {
      * !!!最重要!!!
      * 扫描的书籍ID
      */
-    final static String BOOK_ID = "ad732c840fd441638c443ac48a51e573";
+    //final static String BOOK_ID = "ad732c840fd441638c443ac48a51e573";
 
 
 
 
 
-    private static final int P_WID = 1024;
+    private static final int P_WID = 2048;
 
-    private static final int P_HEIGHT = 768;
+    private static final int P_HEIGHT = 1536;
 
-    private static String filePath =  "D:\\test\\" ;
+    public static String filePath =  "D:\\test\\" ;
 
+    private static String isContinue = "0";
 
     private static String loadpic = "loading.png";
 
     private static BufferedImage loadingImg ;
 
-
-    private static String whitepic = "fullwhite.png";
-
-    private static BufferedImage whiteImg ;
+//
+//    private static String whitepic = "fullwhite.png";
+//
+//    private static BufferedImage whiteImg ;
 
     private static String refreshpic = "refresh.png";
 
@@ -66,7 +69,7 @@ public class fastprint extends JPanel {
 
 
 
-    final static String BOOK_URL = "http://www.duokan.com/reader/www/app.html?id="+BOOK_ID;
+    final static String BOOK_URL_BASE = "http://www.duokan.com/reader/www/app.html?id=";
 
 
 
@@ -79,18 +82,16 @@ public class fastprint extends JPanel {
     int prepare = 0;
 
 
-    public fastprint(final String url) {
+    public fastprint() {
         super(new BorderLayout());
         JPanel webBrowserPanel = new JPanel(new BorderLayout());
+        webBrowserPanel.setPreferredSize(new Dimension(P_HEIGHT,P_WID));
         webBrowser.useWebkitRuntime();
         webBrowser.setBarsVisible(true);
         webBrowser.navigate("https://www.duokan.com/");
         webBrowserPanel.add(webBrowser, BorderLayout.CENTER);
         add(webBrowserPanel, BorderLayout.CENTER);
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 4));
 
-
-        add(panel, BorderLayout.SOUTH);
 
 
         JPanel southPanel = new JPanel();
@@ -101,173 +102,220 @@ public class fastprint extends JPanel {
         setCustomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                webBrowser.navigate(url);
-
-
-                File f = new File(filePath + BOOK_ID);
-                f.mkdir();
-
-
-
-                Thread t = new Thread() {
-                    public void run() {
-                        while (true) {
-
-                                try {
-
-                                    //准备工作
-
-                                    Thread.sleep(100);
-                                    prepare++;
-
-                                    if(prepare==15)
-                                    {
-                                        SwingUtilities.invokeLater(new Runnable() {
-                                            public void run() {
-
-                                                webBrowser.executeJavascript("$('.j-cancel').click();");
-                                                webBrowser.executeJavascript("$('.j-close').click();");
-
-                                                webBrowser.executeJavascript(" $('.j-itm:first').click();");
-                                                webBrowser.executeJavascript("$('.j-pageup').click();");
-
-                                            }
-                                        });
-                                    }
-
-                                        if(prepare<20) continue;
-
-
-
-
-
-                                    /**
-                                     * 0 - 全新图片
-                                     * 1 - 与上一次相同
-                                     * 2 - 与loading图片相同
-                                     * 3 - 与重新刷新图片相同
-                                     */
-                                    int printResult = pringScreen(filePath + BOOK_ID + File.separator + String.format("%04d", fastprint.this.i) + ".png");
-                                    if(printResult==0)
-                                    {
-
-                                        SwingUtilities.invokeLater(new Runnable() {
-                                            public void run() {
-                                                webBrowser.executeJavascript("$('.j-cancel').click();");
-                                                webBrowser.executeJavascript("$('.j-close').click();");
-                                                webBrowser.executeJavascript("$('.j-pagedown').click();");
-                                            }
-                                        });
-                                        i++;
-                                        repeat=0;
-                                    }
-
-
-                                    if(printResult==2) {
-                                        //与上次相同的话
-                                        System.out.println("loading----"+new Date());
-                                        Thread.sleep(1000);
-                                    }
-
-
-                                    if(printResult==3) {
-                                        //刷新当前页
-                                        System.out.println("refresh----"+new Date());
-
-                                        SwingUtilities.invokeLater(new Runnable() {
-                                            public void run() {
-                                                webBrowser.executeJavascript(" $('.u-btn-retry').click();");
-                                            }
-                                        });
-
-                                        Thread.sleep(1000);
-                                    }
-
-
-
-                                    if(printResult==1) {
-                                        //连续5次与上次相同的话，结束
-
-                                        repeat++;
-
-                                        if(repeat<6) {
-                                            if (repeat > 3)
-                                            {
-                                                SwingUtilities.invokeLater(new Runnable() {
-                                                    public void run() {
-                                                        webBrowser.executeJavascript("$('.j-cancel').click();");
-                                                        webBrowser.executeJavascript("$('.j-close').click();");
-                                                        webBrowser.executeJavascript("$('.j-pagedown').click();");
-                                                    }
-                                                });
-                                            }
-                                            Thread.sleep(1000);
-
-                                        }
-                                        else {
-
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-                                                    webBrowser.navigate("https://www.duokan.com/");
-                                                }
-                                            });
-                                            Thread.sleep(1000);
-                                            System.exit(0);
-                                        }
-                                    }
-
-                                } catch (Exception ex) {
-                                    ex.printStackTrace();
-                                }
-
-
-
-
-                        }
-                        }
-
-                };
+                Thread t = getThread();
                 t.start();
 
-
-
             }
         });
 
-        JButton setCustom2Button = new JButton("跳过");
-        setCustom2Button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-
-                webBrowser.executeJavascript("$('.j-cancel').click();");
-
-                webBrowser.executeJavascript("$('.j-close').click();");
-
-            }
-        });
 
 
         southPanel.add(setCustomButton);
-        southPanel.add(setCustom2Button);
-        add(southPanel, BorderLayout.SOUTH);
+        add(southPanel, BorderLayout.NORTH);
+    }
+
+    private Thread getThread() {
+        return new Thread() {
+                        public void run() {
+
+                            Map<String, String> waitBookMap = checkwait.readFileByLines();
+                            Set<String> strings = waitBookMap.keySet();
+                            String[] keyArray = new String[strings.size()];
+                            int count = 0;
+                            for (String string : strings) {
+                                keyArray[count] = string;
+                                count++;
+                            }
+
+                            System.out.println("书籍："+waitBookMap.size());
+
+
+                            for (int j = 0; j <strings.size() ; j++) {
+                                String bookId = keyArray[j];
+                                final String url=BOOK_URL_BASE+bookId;
+
+
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+
+                                        webBrowser.executeJavascript("$(window).bind('beforeunload');");
+                                        webBrowser.executeJavascript(" window.onbeforeunload = null;");
+
+                                        webBrowser.navigate(url);
+                                    }
+                                });
+
+
+
+                                String bookName = waitBookMap.get(bookId);
+
+
+                                System.out.println("begin----"+bookName+new Date());
+                                File f = new File(filePath + bookName);
+                                f.mkdir();
+
+                                while (true) {
+
+                                    try {
+
+                                        //准备工作
+
+                                        Thread.sleep(100);
+                                        prepare++;
+
+                                        if(prepare==45)
+                                        {
+                                            SwingUtilities.invokeLater(new Runnable() {
+                                                public void run() {
+
+                                                    webBrowser.executeJavascript("$('.j-cancel').click();");
+                                                    webBrowser.executeJavascript("$('.j-close').click();");
+
+                                                }
+                                            });
+                                        }
+
+                                        if(prepare==85)
+                                        {
+                                            SwingUtilities.invokeLater(new Runnable() {
+                                                public void run() {
+
+                                                    webBrowser.executeJavascript(" $('.j-itm:first').click();");
+                                                    webBrowser.executeJavascript("$('.j-pageup').click();");
+
+                                                }
+                                            });
+                                        }
+
+
+                                        if(prepare<160) continue;
+
+
+
+                                        /**
+                                         * 0 - 全新图片
+                                         * 1 - 与上一次相同
+                                         * 2 - 与loading图片相同
+                                         * 3 - 与重新刷新图片相同
+                                         */
+                                        int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", fastprint.this.i) + ".png");
+                                        if(printResult==0)
+                                        {
+
+                                            SwingUtilities.invokeLater(new Runnable() {
+                                                public void run() {
+                                                    webBrowser.executeJavascript("$('.j-cancel').click();");
+                                                    webBrowser.executeJavascript("$('.j-close').click();");
+                                                    webBrowser.executeJavascript("$('.j-pagedown').click();");
+                                                }
+                                            });
+                                            i++;
+                                            repeat=0;
+                                            System.out.println("第："+i+"页");
+                                        }
+
+
+                                        if(printResult==2) {
+                                            //与上次相同的话
+                                            System.out.println("loading----"+new Date());
+                                            Thread.sleep(1000);
+                                        }
+
+
+                                        if(printResult==3) {
+                                            //刷新当前页
+                                            System.out.println("refresh----"+new Date());
+
+                                            SwingUtilities.invokeLater(new Runnable() {
+                                                public void run() {
+                                                    webBrowser.executeJavascript(" $('.u-btn-retry').click();");
+                                                }
+                                            });
+
+                                            Thread.sleep(1000);
+                                        }
+
+
+
+                                        if(printResult==1) {
+                                            //连续5次与上次相同的话，结束
+
+                                            repeat++;
+
+                                            if(repeat<6) {
+                                                if (repeat > 3)
+                                                {
+                                                    SwingUtilities.invokeLater(new Runnable() {
+                                                        public void run() {
+                                                            webBrowser.executeJavascript("$('.j-cancel').click();");
+                                                            webBrowser.executeJavascript("$('.j-close').click();");
+                                                            webBrowser.executeJavascript("$('.j-pagedown').click();");
+                                                        }
+                                                    });
+                                                }
+                                                Thread.sleep(1000);
+
+                                            }
+                                            else {
+
+                                                SwingUtilities.invokeLater(new Runnable() {
+                                                    public void run() {
+                                                        webBrowser.executeJavascript("$(window).unbind('beforeunload');");
+                                                        webBrowser.executeJavascript(" window.onbeforeunload = null;");
+                                                        webBrowser.navigate("https://www.duokan.com/");
+                                                    }
+                                                });
+
+
+                                                if(i<3) {
+                                                    j--;
+                                                }
+                                                else if(isContinue==null||isContinue.equals("0"))
+                                                {
+                                                    //只一本
+                                                    Thread.sleep(2000);
+                                                    System.exit(0);
+
+                                                }
+
+                                                prepare = 0;
+                                                i=1;
+                                                System.out.println("end----"+bookName+new Date());
+
+                                                Thread.sleep(2000);
+
+
+                                                break;
+                                            }
+                                        }
+
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+
+                            }
+
+                            }
+
+
+                    };
     }
 
 
-
-
     public static int[] getData(BufferedImage name)throws Exception{
-        BufferedImage img = name;
-        BufferedImage slt = new BufferedImage(100,100,BufferedImage.TYPE_INT_RGB);
-        slt.getGraphics().drawImage(img,0,0,100,100,null);
+        BufferedImage slt = name;
         //ImageIO.write(slt,"jpeg",new File("slt.jpg"));
-        int[] data = new int[256];
-        for(int x = 0;x<slt.getWidth();x++){
-            for(int y = 0;y<slt.getHeight();y++){
-                int rgb = slt.getRGB(x,y);
-                Color myColor = new Color(rgb);
-                int r = myColor.getRed();
-                int g = myColor.getGreen();
-                int b = myColor.getBlue();
-                data[(r+g+b)/3]++;
+        int[] data = new int[slt.getWidth()*slt.getHeight()/16];
+
+
+        int da = 0;
+        int w = slt.getWidth()/8*5;
+        int h = slt.getHeight()*5/8;
+        for(int x = slt.getWidth()/8*3;x<w;x++){
+            for(int y = slt.getHeight()*3/8;y<h;y++){
+                data[da] = slt.getRGB(x,y);
+                da++;
             }
         }
         //data 就是所谓图形学当中的直方图的概念
@@ -286,12 +334,20 @@ public class fastprint extends JPanel {
         }
 
         float result = 0F;
-        for(int i = 0;i<256;i++){
+        int xiansu = imgPath1.getWidth() * imgPath1.getHeight() / 16;
+        for(int i = 0; i< xiansu; i++){
+            if(s[i]==t[i])
+                result++;
+            /*
             int abs = Math.abs(s[i]-t[i]);
             int max = Math.max(s[i],t[i]);
             result += (1-((float)abs/(max==0?1:max)));
+            */
+
+
         }
-        return (int)((result/256)*100);
+        System.out.println("差距："+(int)((result/xiansu)*100));
+        return (int)((result/xiansu)*100);
     }
 
 
@@ -323,6 +379,8 @@ public class fastprint extends JPanel {
 
         BufferedImage temImg =  image.getSubimage(120,240,  210, 120);
 
+        BufferedImage yemaImg =  image.getSubimage(297,534,  120, 32);
+
 
         int i = compare(temImg, loadingImg);
         if(i==100) return 2;
@@ -334,7 +392,7 @@ public class fastprint extends JPanel {
 
         if(waitComImg!=null)
         {
-            int i1 = compare(temImg, waitComImg);
+            int i1 = compare(yemaImg, waitComImg);
             if(i1==100) return 1;
         }
 
@@ -342,7 +400,7 @@ public class fastprint extends JPanel {
         ImageIO.write(image, "png", new File(fileName));
 
         //ImageIO.write(temImg, "png", new File(fileName+"1"));
-        waitComImg =temImg;
+        waitComImg = yemaImg;
         return 0;
     }
 
@@ -352,11 +410,48 @@ public class fastprint extends JPanel {
         System.out.println("---------------start----------");
 
 
-        loadingImg =  ImageIO.read(new FileInputStream(filePath+loadpic));
+        Map<String, String> stringStringMap = readConf.readFileByLines();
 
-        whiteImg  =  ImageIO.read(new FileInputStream(filePath+whitepic));
 
-        refreshImg  =  ImageIO.read(new FileInputStream(filePath+refreshpic));
+        if(stringStringMap.get("con")!=null&&stringStringMap.get("con").length()>0)
+        {
+            isContinue =stringStringMap.get("con");
+        }
+
+
+
+        if(stringStringMap.get("basepath")!=null&&stringStringMap.get("basepath").length()>0)
+        {
+            filePath =stringStringMap.get("basepath");
+        }
+
+        System.out.println(isContinue);
+
+        System.out.println(filePath);
+
+        String devString = "";
+
+        if(stringStringMap.get("devString")!=null&&stringStringMap.get("devString").length()>0)
+        {
+            devString =stringStringMap.get("devString");
+        }
+
+
+
+        System.out.println(devString);
+        /**
+         * 在IDE里跑的时候请打开！
+         *  */
+         //devString = "dev-";
+
+
+        loadingImg =  ImageIO.read(new FileInputStream(filePath+"bin/"+devString+loadpic));
+
+    //    whiteImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+whitepic));
+
+        refreshImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+devString+refreshpic));
+
+        //System.out.println(loadingImg.getHeight());
 
 
 
@@ -365,11 +460,14 @@ public class fastprint extends JPanel {
             public void run() {
 
                 JFrame frame = new JFrame("以DJ组件保存指定网页截图");
-                String url =  BOOK_URL;
 
-                fastprint test = new fastprint(url);
-                frame.getContentPane().add(test, BorderLayout.CENTER);
-                frame.setSize(P_WID, P_HEIGHT+100);
+
+                fastprint test = new fastprint();
+                JScrollPane jScrollPane = new JScrollPane();
+                jScrollPane.setViewportView(test);
+                frame.getContentPane().add(jScrollPane, BorderLayout.CENTER);
+                frame.setSize(1100, 800);
+                frame.setResizable(false);
 //                frame.invalidate();
 //                frame.pack();
                 frame.setVisible(true);//设置是否可见
