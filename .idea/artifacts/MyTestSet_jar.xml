@@ -1,0 +1,20 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MyTestSet:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/MyTestSet_jar</output-path>
+    <root id="archive" name="MyTestSet.jar">
+      <element id="module-output" name="MyTestSet" />
+      <element id="module-output" name="RuiUtils" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.7.1-1/jackson-databind-2.7.1-1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.9/commons-codec-1.9.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.1/httpclient-4.5.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.7.0/jackson-annotations-2.7.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.7.1/jackson-core-2.7.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.3/httpcore-4.4.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/lowagie/itext/2.1.7/itext-2.1.7.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/DJNativeSwing.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/DJNativeSwing-SWT.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/org.eclipse.swt.win32.win32.x86_64_3.104.0.v20150528-0211.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
