@@ -160,7 +160,7 @@ public class fastprint extends JPanel {
 
                                         //准备工作
 
-                                        Thread.sleep(100);
+                                        Thread.sleep(200);
                                         prepare++;
 
                                         if(prepare==45)
@@ -373,7 +373,7 @@ public class fastprint extends JPanel {
                 imageSize.height, BufferedImage.TYPE_INT_RGB);
         nativeComponent.paintComponent(image);
 
-        image = image.getSubimage(288,72,  426, 570);
+        image = image.getSubimage(126,542,  610, 880);
         //小尺寸
         //image = image.getSubimage(310,110,  406, 550);
 
@@ -466,8 +466,8 @@ public class fastprint extends JPanel {
                 JScrollPane jScrollPane = new JScrollPane();
                 jScrollPane.setViewportView(test);
                 frame.getContentPane().add(jScrollPane, BorderLayout.CENTER);
-                frame.setSize(1100, 800);
-                frame.setResizable(false);
+                frame.setSize(1280, 1000);
+                //frame.setResizable(false);
 //                frame.invalidate();
 //                frame.pack();
                 frame.setVisible(true);//设置是否可见

@@ -1,9 +1,8 @@
 package duokan;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2016/8/18 0018.
@@ -11,24 +10,31 @@ import java.io.IOException;
 public class checkwait {
 
 
-    private static String basePath = "E:\\test\\";
+    private static String basePath =fastprint.filePath;
 
 
-    private static String waitConfText = basePath+"waitlist.txt";
+    private static String waitConfText = basePath+"bin/"+"waitlist.txt";
 
     public static void main(String[] args) {
 
-        readFileByLines(waitConfText);
-
+        Map<String, String> stringStringMap = readFileByLines(waitConfText);
+        System.out.println(stringStringMap.size());
     }
 
+    public static Map<String,String> readFileByLines() {
+        return readFileByLines(waitConfText);
+    }
 
+    public static Map<String,String> readFileByLines(String f) {
+        HashMap<String,String> waitMap = new HashMap<>();
 
-    public static void readFileByLines(String f) {
         File file = new File(f);
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new FileReader(file));
+
+            InputStreamReader isr=new InputStreamReader(new FileInputStream(file),"UTF-8");
+
+            reader = new BufferedReader(isr);
             String tempString = null;
             int line = 1;
             while ((tempString = reader.readLine()) != null) {
@@ -38,12 +44,19 @@ public class checkwait {
                 String[] split = tempString.split("-");
                 if(split.length==2)
                 {
-                    File pdfFile = new File(basePath+split[1]+".pdf");
+                    File pdfFile = new File(basePath+split[1]);
                     if(pdfFile.exists())
                         System.out.println("-yes");
-                    else
+                    else {
 
-                        System.out.println("-no");
+                        pdfFile = new File(basePath+split[1]+".pdf");
+                        if(pdfFile.exists())
+                            System.out.println("-yes");
+                        else {
+                            waitMap.put(split[0], split[1]);
+                            System.out.println("-no");
+                        }
+                    }
                 }
 
                 line++;
@@ -59,5 +72,6 @@ public class checkwait {
                 }
             }
         }
+        return waitMap;
     }
 }
