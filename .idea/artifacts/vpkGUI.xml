@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="vpkGUI">
+    <output-path>$PROJECT_DIR$/out/artifacts/vpkGUI</output-path>
+    <root id="archive" name="vpkGUI.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/vpkGUI/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="MyTestSet" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/apache/ant/ant/1.7.0/ant-1.7.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
