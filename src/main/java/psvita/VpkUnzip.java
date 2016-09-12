@@ -1,6 +1,9 @@
 package psvita;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 /**
  * Created by IDEA
@@ -16,6 +19,30 @@ public class VpkUnzip {
 
     private static final String scesysName = "sce_sys";
 
+    private static final String iconName = "icon0.png";
+
+    public static void Copy(String oldPath, String newPath) {
+        try {
+            int bytesum = 0;
+            int byteread = 0;
+            File oldfile = new File(oldPath);
+            if (oldfile.exists()) {
+                InputStream inStream = new FileInputStream(oldPath);
+                FileOutputStream fs = new FileOutputStream(newPath);
+                byte[] buffer = new byte[1444];
+                int length;
+                while ((byteread = inStream.read(buffer)) != -1) {
+                    bytesum += byteread;
+                    fs.write(buffer, 0, byteread);
+                }
+                inStream.close();
+            }
+        } catch (Exception e) {
+            System.out.println("error  ");
+            e.printStackTrace();
+        }
+    }
+
 
     public static int unzipFile() {
         File unzipFile = new File(filePath);
@@ -24,30 +51,36 @@ public class VpkUnzip {
         if (!unzipFile.exists())
             return 1;
 
-        String   destDir = unzipFile.getParent();
+        String destDir = unzipFile.getParent();
 
         String name = unzipFile.getName();
-        name = name.substring(0,name.lastIndexOf("."));
+        name = name.substring(0, name.lastIndexOf("."));
 
         //destDir = destDir;
 
-        String destVpkFile =destDir+File.separator+name+File.separator+name+"_unpack"+".vpk";
+        String destVpkFile = destDir + File.separator + name + File.separator + name + "_unpack" + ".vpk";
+
+        String iconDest = destDir + File.separator + name + File.separator+"icon.png";
+        destDir = destDir + File.separator + name + File.separator + name + "_unpack";
+        try {
+            zipUtil.unZip(filePath, destDir);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 1;
+        }
 
 
-        destDir = destDir+File.separator+name+File.separator+name+"_unpack";
-        try{
-        zipUtil.unZip(filePath,destDir);} catch (Exception e) {
-        e.printStackTrace();
-        return 1;
-    }
+        String ebootFile = destDir + File.separator + ebootName;
+
+        String scesysFile = destDir + File.separator + scesysName;
+
+        String iconFile = scesysFile + File.separator + iconName;
 
 
-        String ebootFile = destDir+File.separator+ebootName;
-
-        String scesysFile = destDir+File.separator+scesysName;
+        Copy(iconFile,iconDest);
 
 
-        String targetPathName = destDir+File.separator+"target"+File.separator;
+                String targetPathName = destDir + File.separator + "target" + File.separator;
 
         File targetPath = new File(targetPathName);
 
@@ -62,7 +95,7 @@ public class VpkUnzip {
         srcDir.renameTo(new File(targetPathName + srcDir.getName()));
 
         try {
-            zipUtil.zip(targetPathName,destVpkFile);
+            zipUtil.zip(targetPathName, destVpkFile);
         } catch (Exception e) {
             e.printStackTrace();
             return 1;

@@ -16,12 +16,11 @@ import chrriis.dj.nativeswing.swtimpl.components.WebBrowserNavigationParameters;
 public class fastprintUAtest extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private static final int P_WID = 2048;
+    private static final int P_WID =  2048;
 
-    private static final int P_HEIGHT = 1336;
+    private static final int P_HEIGHT =  1536;
 
-
-
+    //按Ctrl+- 或者+ 进行缩放，实现高分辨率下高清截图
 
 
     public fastprintUAtest(final String url) {
@@ -33,7 +32,6 @@ public class fastprintUAtest extends JPanel {
 
         //webBrowser.set
         webBrowser.setPreferredSize(new Dimension(P_WID,P_HEIGHT));
-
 
         WebBrowserNavigationParameters parameters = new WebBrowserNavigationParameters();
         Map<String, String> headersMap = new HashMap<String, String>();
@@ -56,7 +54,7 @@ public class fastprintUAtest extends JPanel {
 
                 JFrame frame = new JFrame("以DJ组件保存指定网页截图");
                 String url = "";
-                url = "http://www.duokan.com/reader/www/app.html?id=38cba76d886d4b97a3f25d48b3d4c4be";
+                url = "http://www.duokan.com/reader/www/app.html?id=130e922652ed4c429bb78061ad2ef926";
 
                 fastprintUAtest test = new fastprintUAtest(url);
 
