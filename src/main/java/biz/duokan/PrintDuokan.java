@@ -28,7 +28,7 @@ import db.entity.Duokan;
 public class PrintDuokan extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private static final String Thr_ID = UUID.randomUUID().toString().substring(0,6);
+    private static final String Thr_ID = "线程："+UUID.randomUUID().toString().substring(0,4);
 
     private static final int P_WID = 2048;
 
@@ -40,9 +40,13 @@ public class PrintDuokan extends JPanel {
 
     private static String loadpic = "loading.png";
 
-    private static BufferedImage loadingImg ;
+    private static BufferedImage priceFile ;
 
     private static String refreshpic = "refresh.png";
+
+    private static String  priceFileName = "price.png";
+
+    private static BufferedImage loadingImg ;
 
     private static BufferedImage refreshImg ;
 
@@ -52,7 +56,19 @@ public class PrintDuokan extends JPanel {
 
     final JWebBrowser webBrowser = new JWebBrowser(null);
 
+    final static JCheckBox checkBox1 = new JCheckBox("完成后停止");// 创建复选按钮;
+
+    final static JCheckBox checkBox2 = new JCheckBox("暂停");// 创建复选按钮;
+
+    private static JFrame frame = null;
+
     int i=1;
+
+    int allPageCount = 0;
+
+    int allCount=0;
+
+    private static int pause = 1;
 
     int speed=0;
 
@@ -106,18 +122,27 @@ public class PrintDuokan extends JPanel {
                                 String bookName = duokanBook.getName();
 
                                 //logger.info(Thr_ID+"-"+"任务队列剩余：" + (waitBookMap.size() - j)); 
-                                logger.info(Thr_ID+"-"+"begin----" + bookName + new Date());
+                                logger.info(Thr_ID+"-"+"开始扫描：" + bookName );
+                                frame.setTitle("正在扫描：" + bookName);
                                 File f = new File(filePath + bookName);
                                 f.mkdir();
 
                                 while (true) {
 
+
+
+
                                     try {
+
+
+                                        while (pause==0)
+                                        {
+                                            Thread.sleep(10*1000l);
+                                        }
 
                                         //准备工作
                                         SwingUtilities.invokeLater(new Runnable() {
                                             public void run() {
-                                                webBrowser.executeJavascript("$('.j-cancel').click();");
                                                 webBrowser.executeJavascript("$('.j-close').click();");
                                             }
                                         });
@@ -150,14 +175,33 @@ public class PrintDuokan extends JPanel {
                                         if (prepare < 40) continue;
 
 
+
+
                                         /**
                                          * printResult ：
                                          * 0 - 全新图片
                                          * 1 - 与上一次相同
                                          * 2 - 与loading图片相同
                                          * 3 - 与重新刷新图片相同
+                                         *
+                                         * 5 - 存在购买页面
                                          */
                                         int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.i) + ".png");
+
+                                        allCount++;
+
+
+                                        if (printResult == 5) {
+                                            SwingUtilities.invokeLater(new Runnable() {
+                                                public void run() {
+                                                    webBrowser.executeJavascript("$('.j-close').click();");
+                                                }
+                                            });
+                                            logger.info(Thr_ID+"-"+"发现购买按钮，刷新页面..." );
+                                            Thread.sleep(5000);
+                                        }
+
+
                                         if (printResult == 0) {
 
                                             SwingUtilities.invokeLater(new Runnable() {
@@ -168,15 +212,17 @@ public class PrintDuokan extends JPanel {
                                                 }
                                             });
                                             i++;
+                                            allPageCount++;
                                             repeat = 0;
-                                            logger.info(Thr_ID+"-"+"正在扫描第" + i + "页");
-
-                                            if (speed > 0)
-                                                speed = speed - 100;
+                                            logger.info(Thr_ID+"-"+"正在扫描第" + i + "页;本次扫描："+allPageCount+";循环次数："+allCount);
+                                            frame.setTitle("" + bookName+"-第" + i + "页;（" +allPageCount+
+                                                    "/"  +allCount                                                 +"）");
+//                                            if (speed > 0)
+//                                                speed = speed - 100;
 
                                             continueSuccess++;
 
-                                            if (continueSuccess > 20) {
+                                            if (continueSuccess > 15) {
                                                 speed = -300;
                                             }
 
@@ -187,7 +233,7 @@ public class PrintDuokan extends JPanel {
                                             //与上次相同的话
                                             logger.info(Thr_ID+"-"+"等待中..." );
                                             Thread.sleep(5000);
-                                            speed = 1300;
+                                            speed = 0;
                                             continueSuccess = 0;
                                         }
 
@@ -218,7 +264,7 @@ public class PrintDuokan extends JPanel {
 
                                             Thread.sleep(5000);
 
-                                            speed = 1300;
+                                            speed = 0;
                                             continueSuccess = 0;
                                         }
 
@@ -264,7 +310,7 @@ public class PrintDuokan extends JPanel {
 
                                                 prepare = 0;
                                                 i = 1;
-                                                logger.info(Thr_ID+"-"+"end----" + bookName + new Date());
+                                                logger.info(Thr_ID+"-"+"扫描完成：" + bookName);
 
                                                 Thread.sleep(2000);
 
@@ -342,6 +388,7 @@ public class PrintDuokan extends JPanel {
         s= null;
         t = null;
         logger.debug(name+"差距："+(int)((result/xiansu)*100));
+        //System.out.println(name+"差距："+(int)((result/xiansu)*100));
         return (int)((result/xiansu)*100);
     }
 
@@ -361,14 +408,32 @@ public class PrintDuokan extends JPanel {
         NativeComponent nativeComponent = webBrowser
                 .getNativeComponent();
         Dimension imageSize = new Dimension();
-        imageSize.width = P_WID;
+        imageSize.width =  P_WID;
         imageSize.height = P_HEIGHT;
         //nativeComponent.setSize(imageSize);
         BufferedImage image = new BufferedImage(imageSize.width,
                 imageSize.height, BufferedImage.TYPE_INT_RGB);
-        nativeComponent.paintComponent(image);
 
-        image = image.getSubimage(592,152,  864, 1154);
+
+        int width = 152;
+        if (!devString.equals("hd-"))
+            width = 150;
+
+
+
+        Rectangle[] rectangles = new Rectangle[]{new Rectangle(592,width,  864, 1154)};
+
+        nativeComponent.paintComponent(image,rectangles);
+
+
+        BufferedImage imageNew = image.getSubimage(592,width,  864, 1154);
+
+        image.flush();
+
+        image = imageNew;
+
+        imageNew = null;
+
         //小尺寸
         //image = image.getSubimage(310,110,  406, 550);
         BufferedImage temImg =  image.getSubimage(166*2,279*2,  107*2, 41*2);;//image.getSubimage(120,240,  210, 120);
@@ -386,6 +451,13 @@ public class PrintDuokan extends JPanel {
         int i2 = compare("与刷新按钮的",temImg, refreshImg);
         if(i2==100) return 3;
 
+
+
+        BufferedImage priceTemImg =  image.getSubimage(186*2,411*2,  60*2, 30*2);
+
+        int i5 = compare("与购买按钮的",priceTemImg, priceFile);
+        if(i5==100) return 5;
+
         if(waitComImg!=null)
         {
             int i1 = compare("与上一页的",yemaImg, waitComImg);
@@ -395,19 +467,26 @@ public class PrintDuokan extends JPanel {
 
         ImageIO.write(delMark.delBufferMark(image), "png", new File(fileName));
 
-        //ImageIO.write(temImg, "png", new File(fileName+"1"));
+        //ImageIO.write(priceTemImg, "png", new File(fileName+"1"));
 
         //ImageIO.write(yemaImg, "png", new File(fileName+"2"));
-        waitComImg = null;
+
+        if(waitComImg!=null) {
+            waitComImg.flush();
+            waitComImg = null;
+        }
+
         waitComImg = yemaImg;
+
         image.flush();
         temImg.flush();
-        yemaImg.flush();
-        image = null;temImg = null;yemaImg=null;
+        priceTemImg.flush();
+        image = null;temImg = null;yemaImg=null;priceTemImg=null;
         return 0;
     }
 
 
+    static  String devString ="hd-";
     public static void main(String[] args) throws Exception {
 
         logger.info(Thr_ID+"-"+"---------------start----------");
@@ -432,7 +511,6 @@ public class PrintDuokan extends JPanel {
 
         logger.info(Thr_ID+"-"+filePath);
 
-        String devString = "hd-";
 
         if(stringStringMap.get("devString")!=null&&stringStringMap.get("devString").length()>0)
         {
@@ -440,17 +518,13 @@ public class PrintDuokan extends JPanel {
         }
 
 
+        loadingImg =  ImageIO.read(new FileInputStream(filePath+"bin/"+loadpic));
 
-        //logger.info(Thr_ID+"-"+devString);
+
+        refreshImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+refreshpic));
 
 
-        loadingImg =  ImageIO.read(new FileInputStream(filePath+"bin/"+devString+loadpic));
-
-    //    whiteImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+whitepic));
-
-        refreshImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+devString+refreshpic));
-
-        //logger.info(Thr_ID+"-"+loadingImg.getHeight());
+        priceFile =  ImageIO.read(new FileInputStream(filePath+"bin/"+priceFileName));
 
 
 
@@ -458,8 +532,8 @@ public class PrintDuokan extends JPanel {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
 
-                JFrame frame = new JFrame("以DJ组件保存指定网页截图");
-
+                frame = new JFrame("以DJ组件保存指定网页截图");
+                //frame.setTitle("1111");
 
                 final PrintDuokan test = new PrintDuokan();
                 JScrollPane jScrollPane = new JScrollPane();
@@ -480,9 +554,41 @@ public class PrintDuokan extends JPanel {
                     }
                 });
 
+                checkBox1.setSelected((isContinue==null||isContinue.equals("0") ) ?true:false);
+
+                checkBox1.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+
+                       if(checkBox1.isSelected())
+                           isContinue = "0";
+                        else
+                           isContinue = "1";
+
+
+                    }
+                });
+
+
+                checkBox2.setSelected(false);
+
+                checkBox2.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+
+                        if(checkBox2.isSelected())
+                            pause = 0;
+                        else
+                            pause = 1;
+
+
+                    }
+                });
+
+
 
 
                 southPanel.add(setCustomButton);
+                southPanel.add(checkBox2);
+                southPanel.add(checkBox1);
                 frame.getContentPane().add(southPanel, BorderLayout.NORTH);
 
 

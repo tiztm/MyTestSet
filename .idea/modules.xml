@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MyTestSet.iml" filepath="$PROJECT_DIR$/MyTestSet.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../RuiUtils/RuiUtils.iml" filepath="$PROJECT_DIR$/../RuiUtils/RuiUtils.iml" />
     </modules>
   </component>
 </project>

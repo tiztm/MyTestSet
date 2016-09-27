@@ -21,7 +21,7 @@ public class DuoKanService {
         Duokan bean = null;
 
         while (true) {
-            bean = DuokanDao.dao.getBean("select * from duokan where isdown=0 and (isrunning is null or isrunning !=1);");
+            bean = DuokanDao.dao.getBean("select * from duokan where isdown=0 and (isrunning is null or isrunning !=1)  order by ord desc;");
             if(bean==null) break;
 
             File pdfFile = new File(basePath+bean.getName());

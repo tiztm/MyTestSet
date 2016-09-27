@@ -18,12 +18,20 @@ public class SearchDuokanBookIntoDB {
 
     private static  final  String book_start_url="http://www.duokan.com/search/";
 
-    private  static  final  String keyword = "科幻世界";
 
-    private  static  final int fiPage = 16;
+
+    private static final int bookPerPage = 6;
+
+    private  static  final  String keyword = "黑客与画家";
+
+    private static final int bookNeed = 1;
+
+    private  static  final int fiPage = bookNeed/bookPerPage+1;
 
 
     public static void main(String[] args) throws Exception {
+
+        int bookCount = 0;
 
 
         for (int i = 1; i <=fiPage ; i++) {
@@ -45,26 +53,29 @@ public class SearchDuokanBookIntoDB {
             for (String s1 : patternString) {
                 String id = HTMLUtil.getBetweenString(s1, "data-id=\"", "\"><div");
                 String name = HTMLUtil.getBetweenString(s1, " alt=\"", "\" ondragstart");
-
-
-                System.out.println(id+"-"+name);
-
-                Duokan bean = DuokanDao.dao.getBean("select * from duokan where url='" + id + "';");
-                if(bean==null) {
-                    Duokan object = new Duokan();
-                    object.setName(name);
-                    object.setUrl(id);
-                    object.setIsdown(0);
-                    object.setIsread(0);
-                    object.setKeyword(keyword);
-
-                    DuokanDao.dao.save(object);
-                }
-
+                storeBook(id, name,keyword);
+                bookCount++;
+                if(bookCount>=bookNeed) System.exit(0);
             }
 
 
 
+        }
+    }
+
+    public static void storeBook(String id, String name,String key) {
+        System.out.println(id+"-"+name);
+
+        Duokan bean = DuokanDao.dao.getBean("select * from duokan where url='" + id + "';");
+        if(bean==null) {
+            Duokan object = new Duokan();
+            object.setName(name);
+            object.setUrl(id);
+            object.setIsdown(0);
+            object.setIsread(0);
+            object.setKeyword(key);
+
+            DuokanDao.dao.save(object);
         }
     }
 }
