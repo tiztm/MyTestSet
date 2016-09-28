@@ -5,9 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.Date;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 
@@ -16,7 +14,6 @@ import javax.swing.*;
 
 
 import biz.duokan.utils.DuoKanService;
-import biz.duokan.utils.checkwait;
 import biz.duokan.utils.delMark;
 import biz.duokan.utils.readConf;
 import chrriis.dj.nativeswing.swtimpl.NativeComponent;
@@ -26,6 +23,7 @@ import db.entity.Duokan;
 
 
 public class PrintDuokan extends JPanel {
+
     private static final long serialVersionUID = 1L;
 
     private static final String Thr_ID = "线程："+UUID.randomUUID().toString().substring(0,4);
@@ -38,21 +36,16 @@ public class PrintDuokan extends JPanel {
 
     private static String isContinue = "0";
 
-    private static String loadpic = "loading.png";
-
-    private static BufferedImage priceFile ;
-
-    private static String refreshpic = "refresh.png";
-
-    private static String  priceFileName = "price.png";
-
     private static BufferedImage loadingImg ;
 
     private static BufferedImage refreshImg ;
 
+    private static BufferedImage priceFile ;
+
     private static BufferedImage waitComImg = null ;
 
     final static String BOOK_URL_BASE = "http://www.duokan.com/reader/www/app.html?id=";
+
 
     final JWebBrowser webBrowser = new JWebBrowser(null);
 
@@ -62,7 +55,9 @@ public class PrintDuokan extends JPanel {
 
     private static JFrame frame = null;
 
-    int i=1;
+
+
+    int countNowBookPage =1;
 
     int allPageCount = 0;
 
@@ -99,7 +94,12 @@ public class PrintDuokan extends JPanel {
         return new Thread() {
                         public void run() {
 
+                            try {
+
                             Duokan duokanBook = DuoKanService.rtnNextBook();
+
+
+
                             while (duokanBook!=null) {
 
                                 DuoKanService.runningBook(duokanBook.getId());
@@ -132,7 +132,7 @@ public class PrintDuokan extends JPanel {
 
 
 
-                                    try {
+
 
 
                                         while (pause==0)
@@ -186,7 +186,7 @@ public class PrintDuokan extends JPanel {
                                          *
                                          * 5 - 存在购买页面
                                          */
-                                        int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.i) + ".png");
+                                        int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.countNowBookPage) + ".png");
 
                                         allCount++;
 
@@ -211,11 +211,11 @@ public class PrintDuokan extends JPanel {
                                                     webBrowser.executeJavascript("$('.j-pagedown').click();");
                                                 }
                                             });
-                                            i++;
+                                            countNowBookPage++;
                                             allPageCount++;
                                             repeat = 0;
-                                            logger.info(Thr_ID+"-"+"正在扫描第" + i + "页;本次扫描："+allPageCount+";循环次数："+allCount);
-                                            frame.setTitle("" + bookName+"-第" + i + "页;（" +allPageCount+
+                                            logger.info(Thr_ID+"-"+"正在扫描第" + countNowBookPage + "页;本次扫描："+allPageCount+";循环次数："+allCount);
+                                            frame.setTitle("" + bookName+"-第" + countNowBookPage + "页;（" +allPageCount+
                                                     "/"  +allCount                                                 +"）");
 //                                            if (speed > 0)
 //                                                speed = speed - 100;
@@ -297,7 +297,7 @@ public class PrintDuokan extends JPanel {
                                                 });
 
 
-                                                if (i < 3) {
+                                                if (countNowBookPage < 3) {
                                                    // j--;
                                                 } else if (isContinue == null || isContinue.equals("0")) {
 
@@ -309,7 +309,7 @@ public class PrintDuokan extends JPanel {
                                                 }
 
                                                 prepare = 0;
-                                                i = 1;
+                                                countNowBookPage = 1;
                                                 logger.info(Thr_ID+"-"+"扫描完成：" + bookName);
 
                                                 Thread.sleep(2000);
@@ -326,14 +326,15 @@ public class PrintDuokan extends JPanel {
                                             }
                                         }
 
-                                    } catch (Exception ex) {
-                                        ex.printStackTrace();
-                                    }
+
                                 }
                             }
 
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
                             }
 
+                            }
 
 
 
@@ -518,13 +519,16 @@ public class PrintDuokan extends JPanel {
         }
 
 
-        loadingImg =  ImageIO.read(new FileInputStream(filePath+"bin/"+loadpic));
+        String loadpic = "loading.png";
+        loadingImg =  ImageIO.read(new FileInputStream(filePath+"bin/"+ loadpic));
 
 
-        refreshImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+refreshpic));
+        String refreshpic = "refresh.png";
+        refreshImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+ refreshpic));
 
 
-        priceFile =  ImageIO.read(new FileInputStream(filePath+"bin/"+priceFileName));
+        String priceFileName = "price.png";
+        priceFile =  ImageIO.read(new FileInputStream(filePath+"bin/"+ priceFileName));
 
 
 
