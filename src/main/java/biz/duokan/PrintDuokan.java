@@ -296,33 +296,31 @@ public class PrintDuokan extends JPanel {
                                                     }
                                                 });
 
+                                                prepare = 0;
+                                                countNowBookPage = 1;
 
                                                 if (countNowBookPage < 3) {
-                                                   // j--;
-                                                } else if (isContinue == null || isContinue.equals("0")) {
+                                                   // 重新扫描本书
+                                                    logger.info(Thr_ID + "-" + "重新扫描，扫描失败：" + bookName);
+                                                } else {
 
                                                     DuoKanService.endBook(duokanBook.getId());
-                                                    //只一本
-                                                    Thread.sleep(2000);
-                                                    System.exit(0);
+                                                    if (isContinue == null || isContinue.equals("0")) {
+                                                        //只一本
+                                                        Thread.sleep(2000);
+                                                        System.exit(0);
+
+                                                    }
+
+                                                    logger.info(Thr_ID + "-" + "扫描完成：" + bookName);
+                                                    Thread.sleep(1000);
+
+                                                    duokanBook = DuoKanService.rtnNextBook();
 
                                                 }
 
-                                                prepare = 0;
-                                                countNowBookPage = 1;
-                                                logger.info(Thr_ID+"-"+"扫描完成：" + bookName);
-
-                                                Thread.sleep(2000);
-
-
-                                                DuoKanService.endBook(duokanBook.getId());
-
-                                                Thread.sleep(1000);
-
-                                                duokanBook = DuoKanService.rtnNextBook();
-
-
                                                 break;
+
                                             }
                                         }
 
