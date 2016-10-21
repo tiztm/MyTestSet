@@ -1,4 +1,4 @@
-package biz.duokan.utils;
+package biz.duokan;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Map;
 
 
+import biz.duokan.utils.readConf;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
 
@@ -22,16 +24,10 @@ import javax.imageio.ImageIO;
  * Date:    2016/8/17.
  * pdf转化
  */
-public class pdfCvt {
+public class PdfComvert {
 
 
-    /**
-     * !!!最重要!!!
-     * 扫描的书籍ID
-     */
-    //final static String BOOK_ID = "ad732c840fd441638c443ac48a51e573";
 
-    private static String filePath =  "D:\\test\\" ;
 
     static int x = 0;
 
@@ -69,6 +65,22 @@ public class pdfCvt {
 
     public static void main(String[] args) throws Exception {
 
+
+        Map<String, String> stringStringMap = readConf.readFileByLines();
+
+
+        String filePath = stringStringMap.get("pngPath");
+
+
+        String outPath = stringStringMap.get("outPath");
+
+
+        if (filePath == null || outPath == null || filePath.length() < 1 || outPath.length() < 1)
+    {
+        System.out.println("未配置outPath");
+            return;
+
+    }
         // TODO Auto-generated method stub
         ArrayList<String> imageUrllist =null;
 
@@ -82,7 +94,7 @@ public class pdfCvt {
 
             if(nowDir.isDirectory())
             {
-                File nowDirPdf = new File(filePath+s+".pdf");
+                File nowDirPdf = new File(outPath+File.separator+s+".pdf");
                 if(nowDirPdf.exists())
                 {
                     System.out.println(s+"已有pdf");
@@ -108,7 +120,7 @@ public class pdfCvt {
                 }
 
 
-                String pdfUrl = filePath +BOOK_ID+".pdf";
+                String pdfUrl = outPath+File.separator +BOOK_ID+".pdf";
                 File file = Pdf(imageUrllist, pdfUrl);
                 try {
                     file.createNewFile();

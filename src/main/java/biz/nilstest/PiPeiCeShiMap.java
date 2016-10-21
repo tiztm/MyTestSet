@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import core.util.DateSpanUtil;
-import core.util.RandomStringUtil;
 
 
 public class PiPeiCeShiMap {
@@ -18,7 +17,7 @@ public class PiPeiCeShiMap {
 		Map<String, String> m = new HashMap<String, String>();
 		for (int i = 0; i < 1000000; i++) {
 			
-			m.put(RandomStringUtil.getRandomString(25), RandomStringUtil.getRandomString(32));
+			//m.put(RandomStringUtil.getRandomString(25), RandomStringUtil.getRandomString(32));
 		}
 		dsu.getSpanDate();
 		Set<String> keySet = m.keySet();

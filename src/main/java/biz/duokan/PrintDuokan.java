@@ -3,8 +3,10 @@ package biz.duokan;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,6 +21,8 @@ import biz.duokan.utils.readConf;
 import chrriis.dj.nativeswing.swtimpl.NativeComponent;
 import chrriis.dj.nativeswing.swtimpl.NativeInterface;
 import chrriis.dj.nativeswing.swtimpl.components.JWebBrowser;
+import chrriis.dj.nativeswing.swtimpl.components.WebBrowserAdapter;
+import chrriis.dj.nativeswing.swtimpl.components.WebBrowserEvent;
 import db.entity.Duokan;
 
 
@@ -26,28 +30,30 @@ public class PrintDuokan extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String Thr_ID = "线程："+UUID.randomUUID().toString().substring(0,4);
+    private static final String Thr_ID = "线程：" + UUID.randomUUID().toString().substring(0, 4);
 
     private static final int P_WID = 2048;
 
     private static final int P_HEIGHT = 1536;
 
-    public static String filePath =  "D:\\test\\" ;
+    public static String filePath = "D:\\test\\";
 
     private static String isContinue = "0";
 
-    private static BufferedImage loadingImg ;
+    private static String testMode = "0";
 
-    private static BufferedImage refreshImg ;
+    private static BufferedImage loadingImg;
 
-    private static BufferedImage priceFile ;
+    private static BufferedImage refreshImg;
 
-    private static BufferedImage waitComImg = null ;
+    private static BufferedImage priceFile;
+
+    private static BufferedImage waitComImg = null;
 
     final static String BOOK_URL_BASE = "http://www.duokan.com/reader/www/app.html?id=";
 
 
-    final JWebBrowser webBrowser = new JWebBrowser(null);
+    static JWebBrowser webBrowser = new JWebBrowser(null);
 
     final static JCheckBox checkBox1 = new JCheckBox("完成后停止");// 创建复选按钮;
 
@@ -56,16 +62,17 @@ public class PrintDuokan extends JPanel {
     private static JFrame frame = null;
 
 
-
-    int countNowBookPage =1;
+    int countNowBookPage = 1;
 
     int allPageCount = 0;
 
-    int allCount=0;
+    int allCount = 0;
+
+    int errorCount = 0;
 
     private static int pause = 1;
 
-    int speed=0;
+    int speed = 0;
 
     int repeat = 0;
 
@@ -74,284 +81,350 @@ public class PrintDuokan extends JPanel {
     int prepare = 0;
 
 
-    public PrintDuokan() {
-        super(new BorderLayout());
-        JPanel webBrowserPanel = new JPanel(new BorderLayout());
-        webBrowser.setPreferredSize(new Dimension(P_WID,P_HEIGHT));
-        webBrowser.setSize(new Dimension(P_WID,P_HEIGHT));
-        webBrowser.useWebkitRuntime();
+    private static boolean isOK = false;
+
+
+    private JScrollPane rtmPanel() {
+
+
+        JScrollPane jScrollPane = new JScrollPane();
+        webBrowser.setPreferredSize(new Dimension(P_WID, P_HEIGHT));
+        //webBrowser.setSize(new Dimension(P_WID, P_HEIGHT));
         webBrowser.setBarsVisible(true);
         webBrowser.navigate("https://www.duokan.com/");
-        webBrowserPanel.add(webBrowser, BorderLayout.CENTER);
-        add(webBrowserPanel, BorderLayout.CENTER);
+        webBrowser.addWebBrowserListener(new WebBrowserAdapter() {
+                                             public void loadingProgressChanged(WebBrowserEvent e) {
 
+                                                 if (e.getWebBrowser().getLoadingProgress() < 100) {
+                                                     isOK = false;
+                                                     //logger.info("在加载："+e.getWebBrowser().getLoadingProgress() );
+                                                 }
+
+
+                                             }
+                                         }
+
+        );
+        jScrollPane.setViewportView(webBrowser);
+        return jScrollPane;
     }
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PrintDuokan.class);
 
+    private static int precentPre = 0;
+    private static int precentCotinue = 0;
+
 
     private Thread getThread() {
         return new Thread() {
-                        public void run() {
-
-                            try {
-
-                            Duokan duokanBook = DuoKanService.rtnNextBook();
+            public void run() {
 
 
+                try {
 
-                            while (duokanBook!=null) {
+                    Thread.sleep(20000);
 
-                                DuoKanService.runningBook(duokanBook.getId());
-
-                                String bookId = duokanBook.getUrl() + "";
-                                final String url = BOOK_URL_BASE + bookId;
+                    Duokan duokanBook = DuoKanService.rtnNextBook();
 
 
+                    while (duokanBook != null) {
+
+                        DuoKanService.runningBook(duokanBook.getId());
+
+                        String bookId = duokanBook.getUrl() + "";
+                        final String url = BOOK_URL_BASE + bookId;
+
+
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+
+                                webBrowser.executeJavascript("$(window).bind('beforeunload');");
+                                webBrowser.executeJavascript(" window.onbeforeunload = null;");
+
+                                webBrowser.navigate(url);
+
+                            }
+                        });
+
+
+                        String bookName = duokanBook.getName();
+
+                        //logger.info(Thr_ID+"-"+"任务队列剩余：" + (waitBookMap.size() - j));
+                        logger.info(Thr_ID + "-" + "开始扫描：" + bookName);
+                        frame.setTitle("正在扫描：" + bookName);
+                        File f = new File(filePath + bookName);
+                        f.mkdir();
+
+                        while (true) {
+
+
+                            while (!isOK) {
+
+                                if (webBrowser.getLoadingProgress() == 100) {
+                                    isOK = true;
+                                }
+
+                                if (precentPre == webBrowser.getLoadingProgress()) {
+                                    precentCotinue++;
+                                } else {
+                                    precentCotinue = 0;
+                                }
+
+                                //6s进度不动就继续
+                                if (precentCotinue > 30) {
+                                    isOK = true;
+                                    precentCotinue = 0;
+                                    logger.info(Thr_ID + "-" + "超过6s未能100%加载，直接截图");
+                                }
+                                precentPre = webBrowser.getLoadingProgress();
+
+                                Thread.sleep(200);
+                            }
+
+                            while (pause == 0) {
+                                Thread.sleep(10 * 1000l);
+                            }
+
+
+                            //准备工作
+                            SwingUtilities.invokeLater(new Runnable() {
+                                public void run() {
+                                    webBrowser.executeJavascript("$('.j-close').click();");
+                                }
+                            });
+                            Thread.sleep(500 + speed);
+                            prepare++;
+
+                            if (prepare == 15) {
                                 SwingUtilities.invokeLater(new Runnable() {
                                     public void run() {
 
-                                        webBrowser.executeJavascript("$(window).bind('beforeunload');");
-                                        webBrowser.executeJavascript(" window.onbeforeunload = null;");
+                                        webBrowser.executeJavascript("$('.j-cancel').click();");
+                                        webBrowser.executeJavascript("$('.j-close').click();");
 
-                                        webBrowser.navigate(url);
                                     }
                                 });
+                            }
+
+                            if (prepare == 25) {
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+
+                                        webBrowser.executeJavascript(" $('.j-itm:first').click();");
+                                        webBrowser.executeJavascript("$('.j-pageup').click();");
+
+                                    }
+                                });
+                            }
 
 
-                                String bookName = duokanBook.getName();
-
-                                //logger.info(Thr_ID+"-"+"任务队列剩余：" + (waitBookMap.size() - j)); 
-                                logger.info(Thr_ID+"-"+"开始扫描：" + bookName );
-                                frame.setTitle("正在扫描：" + bookName);
-                                File f = new File(filePath + bookName);
-                                f.mkdir();
-
-                                while (true) {
+                            if (prepare < 40) continue;
 
 
+                            /**
+                             * printResult ：
+                             * 0 - 全新图片
+                             * 1 - 与上一次相同
+                             * 2 - 与loading图片相同
+                             * 3 - 与重新刷新图片相同
+                             *
+                             * 5 - 存在购买页面
+                             */
+                            int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.countNowBookPage) + ".png", false);
 
+                            allCount++;
 
+                            //如果连续出现刷新当前页超过40次，强制前进
+                            if (printResult == 2 || printResult == 3) {
+                                errorCount++;
+                                if (errorCount > 40) {
+                                    errorCount = 0;
+                                    logger.info(Thr_ID + "-" + "由于长期无法翻页，强制前进");
+                                    SwingUtilities.invokeLater(new Runnable() {
+                                        public void run() {
+                                            webBrowser.executeJavascript("$('.j-cancel').click();");
+                                            webBrowser.executeJavascript("$('.j-close').click();");
 
-
-
-                                        while (pause==0)
-                                        {
-                                            Thread.sleep(10*1000l);
+                                            webBrowser.executeJavascript("$('.j-pagedown').click();");
                                         }
+                                    });
 
-                                        //准备工作
-                                        SwingUtilities.invokeLater(new Runnable() {
-                                            public void run() {
-                                                webBrowser.executeJavascript("$('.j-close').click();");
-                                            }
-                                        });
-                                        Thread.sleep(500 + speed);
-                                        prepare++;
+                                    continue;
 
-                                        if (prepare == 15) {
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-
-                                                    webBrowser.executeJavascript("$('.j-cancel').click();");
-                                                    webBrowser.executeJavascript("$('.j-close').click();");
-
-                                                }
-                                            });
-                                        }
-
-                                        if (prepare == 25) {
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-
-                                                    webBrowser.executeJavascript(" $('.j-itm:first').click();");
-                                                    webBrowser.executeJavascript("$('.j-pageup').click();");
-
-                                                }
-                                            });
-                                        }
+                                }
 
 
-                                        if (prepare < 40) continue;
+                            }
 
 
+                            if (printResult == 5) {
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+                                        webBrowser.executeJavascript("$('.j-close').click();");
+                                    }
+                                });
+                                logger.info(Thr_ID + "-" + "发现购买按钮，刷新页面...");
+                                Thread.sleep(5000);
+                            }
 
 
-                                        /**
-                                         * printResult ：
-                                         * 0 - 全新图片
-                                         * 1 - 与上一次相同
-                                         * 2 - 与loading图片相同
-                                         * 3 - 与重新刷新图片相同
-                                         *
-                                         * 5 - 存在购买页面
-                                         */
-                                        int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.countNowBookPage) + ".png");
+                            if (printResult == 0) {
 
-                                        allCount++;
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+                                        webBrowser.executeJavascript("$('.j-cancel').click();");
+                                        webBrowser.executeJavascript("$('.j-close').click();");
 
-
-                                        if (printResult == 5) {
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-                                                    webBrowser.executeJavascript("$('.j-close').click();");
-                                                }
-                                            });
-                                            logger.info(Thr_ID+"-"+"发现购买按钮，刷新页面..." );
-                                            Thread.sleep(5000);
-                                        }
-
-
-                                        if (printResult == 0) {
-
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-                                                    webBrowser.executeJavascript("$('.j-cancel').click();");
-                                                    webBrowser.executeJavascript("$('.j-close').click();");
-                                                    webBrowser.executeJavascript("$('.j-pagedown').click();");
-                                                }
-                                            });
-                                            countNowBookPage++;
-                                            allPageCount++;
-                                            repeat = 0;
-                                            logger.info(Thr_ID+"-"+"正在扫描第" + countNowBookPage + "页;本次扫描："+allPageCount+";循环次数："+allCount);
-                                            frame.setTitle("" + bookName+"-第" + countNowBookPage + "页;（" +allPageCount+
-                                                    "/"  +allCount                                                 +"）");
+                                        webBrowser.executeJavascript("$('.j-pagedown').click();");
+                                    }
+                                });
+                                countNowBookPage++;
+                                allPageCount++;
+                                repeat = 0;
+                                logger.info(Thr_ID + "-" + "正在扫描第" + countNowBookPage + "页;本次扫描：" + allPageCount + ";循环次数：" + allCount);
+                                frame.setTitle("" + bookName + "-第" + countNowBookPage + "页;（" + allPageCount +
+                                        "/" + allCount + "）");
 //                                            if (speed > 0)
 //                                                speed = speed - 100;
 
-                                            continueSuccess++;
+                                continueSuccess++;
+                                errorCount = 0;
+                                if (continueSuccess > 15) {
+                                    speed = -300;
+                                }
 
-                                            if (continueSuccess > 15) {
-                                                speed = -300;
+                            }
+
+
+                            if (printResult == 2) {
+                                //与上次相同的话
+                                logger.info(Thr_ID + "-" + "等待中...");
+                                Thread.sleep(5000);
+                                speed = 0;
+                                continueSuccess = 0;
+                            }
+
+
+                            if (printResult == 3) {
+                                //刷新当前页
+                                logger.info(Thr_ID + "-" + "刷新当前页...");
+
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+                                        webBrowser.executeJavascript(" $('.u-btn-retry').click();");
+                                    }
+                                });
+
+                                Thread.sleep(200);
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+                                        webBrowser.executeJavascript(" $('.u-btn-retry').click();");
+                                    }
+                                });
+
+                                Thread.sleep(200);
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    public void run() {
+                                        webBrowser.executeJavascript(" $('.u-btn-retry').click();");
+                                    }
+                                });
+
+                                Thread.sleep(5000);
+
+                                speed = 0;
+                                continueSuccess = 0;
+                            }
+
+
+                            if (printResult == 1) {
+                                //连续5次与上次相同的话，结束
+
+                                repeat++;
+
+                                if (repeat < 6) {
+                                    if (repeat > 3) {
+                                        SwingUtilities.invokeLater(new Runnable() {
+                                            public void run() {
+                                                webBrowser.executeJavascript("$('.j-cancel').click();");
+                                                webBrowser.executeJavascript("$('.j-close').click();");
+
+                                                webBrowser.executeJavascript("$('.j-pagedown').click();");
                                             }
+                                        });
+                                    }
+                                    Thread.sleep(1000);
+
+                                } else {
+
+                                    SwingUtilities.invokeLater(new Runnable() {
+                                        public void run() {
+                                            webBrowser.executeJavascript("$(window).unbind('beforeunload');");
+                                            webBrowser.executeJavascript(" window.onbeforeunload = null;");
+
+                                            webBrowser.navigate("https://www.duokan.com/");
+
+                                        }
+                                    });
+
+
+                                    if (countNowBookPage < 3) {
+
+                                        prepare = 0;
+                                        countNowBookPage = 1;
+                                        // 重新扫描本书
+                                        logger.info(Thr_ID + "-" + "重新扫描，扫描失败：" + bookName);
+                                    } else {
+
+                                        prepare = 0;
+                                        countNowBookPage = 1;
+
+                                        DuoKanService.endBook(duokanBook.getId());
+                                        if (isContinue == null || isContinue.equals("0")) {
+                                            //只一本
+                                            Thread.sleep(2000);
+                                            System.exit(0);
 
                                         }
 
+                                        logger.info(Thr_ID + "-" + "扫描完成：" + bookName);
+                                        Thread.sleep(1000);
 
-                                        if (printResult == 2) {
-                                            //与上次相同的话
-                                            logger.info(Thr_ID+"-"+"等待中..." );
-                                            Thread.sleep(5000);
-                                            speed = 0;
-                                            continueSuccess = 0;
-                                        }
+                                        duokanBook = DuoKanService.rtnNextBook();
 
+                                    }
 
-                                        if (printResult == 3) {
-                                            //刷新当前页
-                                            logger.info(Thr_ID+"-"+"刷新当前页..." );
-
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-                                                    webBrowser.executeJavascript(" $('.u-btn-retry').click();");
-                                                }
-                                            });
-
-                                            Thread.sleep(200);
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-                                                    webBrowser.executeJavascript(" $('.u-btn-retry').click();");
-                                                }
-                                            });
-
-                                            Thread.sleep(200);
-                                            SwingUtilities.invokeLater(new Runnable() {
-                                                public void run() {
-                                                    webBrowser.executeJavascript(" $('.u-btn-retry').click();");
-                                                }
-                                            });
-
-                                            Thread.sleep(5000);
-
-                                            speed = 0;
-                                            continueSuccess = 0;
-                                        }
-
-
-                                        if (printResult == 1) {
-                                            //连续5次与上次相同的话，结束
-
-                                            repeat++;
-
-                                            if (repeat < 6) {
-                                                if (repeat > 3) {
-                                                    SwingUtilities.invokeLater(new Runnable() {
-                                                        public void run() {
-                                                            webBrowser.executeJavascript("$('.j-cancel').click();");
-                                                            webBrowser.executeJavascript("$('.j-close').click();");
-                                                            webBrowser.executeJavascript("$('.j-pagedown').click();");
-                                                        }
-                                                    });
-                                                }
-                                                Thread.sleep(1000);
-
-                                            } else {
-
-                                                SwingUtilities.invokeLater(new Runnable() {
-                                                    public void run() {
-                                                        webBrowser.executeJavascript("$(window).unbind('beforeunload');");
-                                                        webBrowser.executeJavascript(" window.onbeforeunload = null;");
-                                                        webBrowser.navigate("https://www.duokan.com/");
-                                                    }
-                                                });
-
-                                                prepare = 0;
-                                                countNowBookPage = 1;
-
-                                                if (countNowBookPage < 3) {
-                                                   // 重新扫描本书
-                                                    logger.info(Thr_ID + "-" + "重新扫描，扫描失败：" + bookName);
-                                                } else {
-
-                                                    DuoKanService.endBook(duokanBook.getId());
-                                                    if (isContinue == null || isContinue.equals("0")) {
-                                                        //只一本
-                                                        Thread.sleep(2000);
-                                                        System.exit(0);
-
-                                                    }
-
-                                                    logger.info(Thr_ID + "-" + "扫描完成：" + bookName);
-                                                    Thread.sleep(1000);
-
-                                                    duokanBook = DuoKanService.rtnNextBook();
-
-                                                }
-
-                                                break;
-
-                                            }
-                                        }
-
+                                    break;
 
                                 }
                             }
 
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
 
-                            }
+                        }
+                    }
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
 
 
-
-                    };
+        };
     }
 
 
-    public static int[] getData(BufferedImage name)throws Exception{
+    public static int[] getData(BufferedImage name) throws Exception {
         BufferedImage slt = name;
         //ImageIO.write(slt,"jpeg",new File("slt.jpg"));
-        int[] data = new int[slt.getWidth()*slt.getHeight()/16];
+        int[] data = new int[slt.getWidth() * slt.getHeight() / 16];
 
 
         int da = 0;
-        int w = slt.getWidth()/8*5;
-        int h = slt.getHeight()*5/8;
-        for(int x = slt.getWidth()/8*3;x<w;x++){
-            for(int y = slt.getHeight()*3/8;y<h;y++){
-                data[da] = slt.getRGB(x,y);
+        int w = slt.getWidth() / 8 * 5;
+        int h = slt.getHeight() * 5 / 8;
+        for (int x = slt.getWidth() / 8 * 3; x < w; x++) {
+            for (int y = slt.getHeight() * 3 / 8; y < h; y++) {
+                data[da] = slt.getRGB(x, y);
                 da++;
             }
         }
@@ -359,7 +432,8 @@ public class PrintDuokan extends JPanel {
         //data 就是所谓图形学当中的直方图的概念
         return data;
     }
-    public static int compare(String name,BufferedImage imgPath1, BufferedImage imgPath2){
+
+    public static int compare(String name, BufferedImage imgPath1, BufferedImage imgPath2) {
 
         int[] s;
         int[] t;
@@ -373,8 +447,8 @@ public class PrintDuokan extends JPanel {
 
         float result = 0F;
         int xiansu = imgPath1.getWidth() * imgPath1.getHeight() / 16;
-        for(int i = 0; i< xiansu; i++){
-            if(s[i]==t[i])
+        for (int i = 0; i < xiansu; i++) {
+            if (s[i] == t[i])
                 result++;
             /*
             int abs = Math.abs(s[i]-t[i]);
@@ -384,30 +458,37 @@ public class PrintDuokan extends JPanel {
 
 
         }
-        s= null;
+        s = null;
         t = null;
-        logger.debug(name+"差距："+(int)((result/xiansu)*100));
+        logger.debug(name + "差距：" + (int) ((result / xiansu) * 100));
         //System.out.println(name+"差距："+(int)((result/xiansu)*100));
-        return (int)((result/xiansu)*100);
+        return (int) ((result / xiansu) * 100);
     }
 
+
+    private static void paintNow() throws IOException {
+        String filePath = "d://" + new Date().getTime() + ".png";
+
+
+        pringScreen(filePath, true);
+    }
 
 
     /**
      * 比较图片是否相同
+     *
      * @param fileName
-     * @return
-     * 0 - 全新图片
+     * @return 0 - 全新图片
      * 1 - 与上一次相同
      * 2 - 与loading图片相同
      * 3 - 与重新刷新图片相同
      * @throws IOException
      */
-    private int pringScreen(String fileName) throws IOException {
+    private static int pringScreen(String fileName, boolean onlyPrint) throws IOException {
         NativeComponent nativeComponent = webBrowser
                 .getNativeComponent();
         Dimension imageSize = new Dimension();
-        imageSize.width =  P_WID;
+        imageSize.width = P_WID;
         imageSize.height = P_HEIGHT;
         //nativeComponent.setSize(imageSize);
         BufferedImage image = new BufferedImage(imageSize.width,
@@ -418,59 +499,68 @@ public class PrintDuokan extends JPanel {
         if (!devString.equals("hd-"))
             width = 150;
 
+        Graphics2D g2 = (Graphics2D) image.getGraphics();
 
+        Rectangle[] rectangles = new Rectangle[]{new Rectangle(592, width, 864, 1154)};
 
-        Rectangle[] rectangles = new Rectangle[]{new Rectangle(592,width,  864, 1154)};
+        nativeComponent.print(g2);
+        //nativeComponent(image,rectangles);
 
-        nativeComponent.paintComponent(image,rectangles);
-
-
-        BufferedImage imageNew = image.getSubimage(592,width,  864, 1154);
+        BufferedImage imageNew = image.getSubimage(592, width, 864, 1154);
 
         image.flush();
+
+        g2.dispose();
 
         image = imageNew;
 
         imageNew = null;
 
+
+        //如果只是为了截图，此处返回即可；
+        if (onlyPrint) {
+            ImageIO.write(delMark.delBufferMark(image), "png", new File(fileName));
+            return -1;
+        }
+
         //小尺寸
         //image = image.getSubimage(310,110,  406, 550);
-        BufferedImage temImg =  image.getSubimage(166*2,279*2,  107*2, 41*2);;//image.getSubimage(120,240,  210, 120);
+        BufferedImage temImg = image.getSubimage(166 * 2, 279 * 2, 107 * 2, 41 * 2);
+        ;//image.getSubimage(120,240,  210, 120);
 
-        BufferedImage yemaImg =   image.getSubimage(338*2-33,549*2,  76*2, 20*2);;//image.getSubimage(297,534,  120, 32);
+        BufferedImage yemaImg = image.getSubimage(338 * 2 - 33, 549 * 2, 76 * 2, 20 * 2);
+        ;//image.getSubimage(297,534,  120, 32);
 
 
-
-        int i = compare("与Loading的",temImg, loadingImg);
-        if(i==100) return 2;
+        int i = compare("与Loading的", temImg, loadingImg);
+        if (i == 100) return 2;
 
 //        i =  compare(image, whiteImg);
 //        if(i==100) return 2;
 
-        int i2 = compare("与刷新按钮的",temImg, refreshImg);
-        if(i2==100) return 3;
+        int i2 = compare("与刷新按钮的", temImg, refreshImg);
+        if (i2 == 100) return 3;
 
 
+        BufferedImage priceTemImg = image.getSubimage(186 * 2, 411 * 2, 60 * 2, 30 * 2);
 
-        BufferedImage priceTemImg =  image.getSubimage(186*2,411*2,  60*2, 30*2);
+        int i5 = compare("与购买按钮的", priceTemImg, priceFile);
+        if (i5 == 100) return 5;
 
-        int i5 = compare("与购买按钮的",priceTemImg, priceFile);
-        if(i5==100) return 5;
-
-        if(waitComImg!=null)
-        {
-            int i1 = compare("与上一页的",yemaImg, waitComImg);
-            if(i1==100) return 1;
+        if (waitComImg != null) {
+            int i1 = compare("与上一页的", yemaImg, waitComImg);
+            if (i1 == 100) return 1;
         }
 
 
         ImageIO.write(delMark.delBufferMark(image), "png", new File(fileName));
 
-        //ImageIO.write(priceTemImg, "png", new File(fileName+"1"));
+        if (testMode.endsWith("1")) {
+            ImageIO.write(temImg, "png", new File(fileName + "1"));
+            ImageIO.write(priceTemImg, "png", new File(fileName + "2"));
+        }
 
-        //ImageIO.write(yemaImg, "png", new File(fileName+"2"));
-
-        if(waitComImg!=null) {
+        if (waitComImg != null) {
             waitComImg.flush();
             waitComImg = null;
         }
@@ -480,132 +570,204 @@ public class PrintDuokan extends JPanel {
         image.flush();
         temImg.flush();
         priceTemImg.flush();
-        image = null;temImg = null;yemaImg=null;priceTemImg=null;
+        image = null;
+        temImg = null;
+        yemaImg = null;
+        priceTemImg = null;
         return 0;
     }
 
 
-    static  String devString ="hd-";
+    static String devString = "hd-";
+
     public static void main(String[] args) throws Exception {
 
-        logger.info(Thr_ID+"-"+"---------------start----------");
+        logger.info(Thr_ID + "-" + "---------------start----------");
 
 
         Map<String, String> stringStringMap = readConf.readFileByLines();
 
 
-        if(stringStringMap.get("con")!=null&&stringStringMap.get("con").length()>0)
-        {
-            isContinue =stringStringMap.get("con");
+        if (stringStringMap.get("containerMain") != null && stringStringMap.get("containerMain").length() > 0) {
+            isContinue = stringStringMap.get("containerMain");
+        }
+
+        String testModeString = stringStringMap.get("testMode");
+
+
+        if (testModeString != null && testModeString.length() > 0) {
+            testMode = testModeString;
         }
 
 
-
-        if(stringStringMap.get("basepath")!=null&&stringStringMap.get("basepath").length()>0)
-        {
-            filePath =stringStringMap.get("basepath");
+        if (stringStringMap.get("basepath") != null && stringStringMap.get("basepath").length() > 0) {
+            filePath = stringStringMap.get("basepath");
         }
 
-        logger.info(Thr_ID+"-"+isContinue);
+        logger.info(Thr_ID + "-" + isContinue);
 
-        logger.info(Thr_ID+"-"+filePath);
+        logger.info(Thr_ID + "-" + filePath);
 
 
-        if(stringStringMap.get("devString")!=null&&stringStringMap.get("devString").length()>0)
-        {
-            devString =stringStringMap.get("devString");
+        if (stringStringMap.get("devString") != null && stringStringMap.get("devString").length() > 0) {
+            devString = stringStringMap.get("devString");
         }
 
 
         String loadpic = "loading.png";
-        loadingImg =  ImageIO.read(new FileInputStream(filePath+"bin/"+ loadpic));
+        loadingImg = ImageIO.read(new FileInputStream(filePath + "bin/" + loadpic));
 
 
         String refreshpic = "refresh.png";
-        refreshImg  =  ImageIO.read(new FileInputStream(filePath+"bin/"+ refreshpic));
+        refreshImg = ImageIO.read(new FileInputStream(filePath + "bin/" + refreshpic));
 
 
         String priceFileName = "price.png";
-        priceFile =  ImageIO.read(new FileInputStream(filePath+"bin/"+ priceFileName));
-
+        priceFile = ImageIO.read(new FileInputStream(filePath + "bin/" + priceFileName));
 
 
         NativeInterface.open();
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
 
-                frame = new JFrame("以DJ组件保存指定网页截图");
-                //frame.setTitle("1111");
+                frame = new JFrame("多看抓取");
 
                 final PrintDuokan test = new PrintDuokan();
-                JScrollPane jScrollPane = new JScrollPane();
-                jScrollPane.setViewportView(test);
+
+                JScrollPane jp = test.rtmPanel();
+
+                JPanel southPanel = rtmCtrlPanel(test);
 
 
-                JPanel southPanel = new JPanel();
-
-
-                //southPanel.setBorder(BorderFactory.createTitledBorder("自定义"));
-                JButton setCustomButton = new JButton("开始扫描");
-                setCustomButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-
-                        Thread t = test.getThread();
-                        t.start();
-
-                    }
-                });
-
-                checkBox1.setSelected((isContinue==null||isContinue.equals("0") ) ?true:false);
-
-                checkBox1.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-
-                       if(checkBox1.isSelected())
-                           isContinue = "0";
-                        else
-                           isContinue = "1";
-
-
-                    }
-                });
-
-
-                checkBox2.setSelected(false);
-
-                checkBox2.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-
-                        if(checkBox2.isSelected())
-                            pause = 0;
-                        else
-                            pause = 1;
-
-
-                    }
-                });
-
-
-
-
-                southPanel.add(setCustomButton);
-                southPanel.add(checkBox2);
-                southPanel.add(checkBox1);
+                frame.getContentPane().add(jp, BorderLayout.CENTER);
                 frame.getContentPane().add(southPanel, BorderLayout.NORTH);
 
-
-                frame.getContentPane().add(jScrollPane, BorderLayout.CENTER);
                 frame.setSize(800, 600);
                 //frame.setResizable(false);
 //                frame.invalidate();
 //                frame.pack();
                 frame.setVisible(true);//设置是否可见
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//使能关闭窗口，结束程序
 
-                logger.info(Thr_ID+"-"+"---------------end----------");
+                webBrowser.getNativeComponent().requestFocus();
+
+
+                Thread t = test.getThread();
+                t.start();
+
+                logger.info(Thr_ID + "-" + "---------------end----------");
             }
         });
+
+        Thread t2 = new Thread() {
+            public void run() {
+                autoZoom();
+            }
+        };
+        t2.start();
+
         NativeInterface.runEventPump();
 
+
+    }
+
+    public static JPanel rtmCtrlPanel(final PrintDuokan test) {
+        JPanel southPanel = new JPanel();
+        JButton setCustomButton = new JButton("开始扫描");
+        setCustomButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                Thread t = test.getThread();
+                t.start();
+
+                //setCustomButton.setVisible(false);
+
+            }
+        });
+
+        //southPanel.setBorder(BorderFactory.createTitledBorder("自定义"));
+        JButton justPantBtn = new JButton("截图");
+        justPantBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    paintNow();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+        });
+
+        checkBox1.setSelected((isContinue == null || isContinue.equals("0")) ? true : false);
+
+        checkBox1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                if (checkBox1.isSelected())
+                    isContinue = "0";
+                else
+                    isContinue = "1";
+
+
+            }
+        });
+
+
+        checkBox2.setSelected(false);
+
+        checkBox2.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                if (checkBox2.isSelected())
+                    pause = 0;
+                else
+                    pause = 1;
+
+
+            }
+        });
+
+
+        southPanel.add(justPantBtn);
+        southPanel.add(checkBox2);
+        southPanel.add(checkBox1);
+        return southPanel;
+    }
+
+    public static void autoZoom() {
+        try {
+
+
+            Thread.sleep(5000);
+
+
+            Robot r = new Robot();//创建自动化工具对象
+
+            for (int i = 0; i < 4; i++) {
+
+                Thread.sleep(300);
+
+
+                r.keyPress(KeyEvent.VK_CONTROL);//按下左Contrl  keycode为17
+
+                r.keyPress(KeyEvent.VK_ADD);
+
+                r.keyRelease(KeyEvent.VK_ADD);
+
+                r.keyRelease(KeyEvent.VK_CONTROL);//释放左Control键
+
+
+            }
+
+            logger.info("Zoom Over!");
+
+            logger.info("Begin Work!");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
