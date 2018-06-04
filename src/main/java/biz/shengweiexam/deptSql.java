@@ -24,11 +24,11 @@ public class deptSql {
         params.setHeadRows(1);
         long start = new Date().getTime();
         List<deptEntity> list = ExcelImportUtil.importExcel(new File(
-                "c:/dept.xls"), deptEntity.class, params);
+                "d:/dept.xls"), deptEntity.class, params);
 
         System.out.println(list.size());
 
-        for (int i = 0; i <list.size() ; i++) {
+        for (int i = 266; i <list.size() ; i++) {
 
             deptEntity deptEntity = list.get(i);
             String Name = deptEntity.getName();

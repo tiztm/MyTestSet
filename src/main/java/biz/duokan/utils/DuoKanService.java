@@ -47,6 +47,18 @@ public class DuoKanService {
 
         return null;
     }
+    public static  Duokan rtnNextCataWaitBook()
+    {
+        Duokan bean = null;
+
+        while (true) {
+            bean = DuokanDao.dao.getBean("select * from duokan where catastring is null order by ord desc;");//("select * from duokan where LENGTH(catastring) <80 and name not like '%知乎%' order by ord desc;");
+            if(bean==null) break;
+            return  bean;
+        }
+
+        return null;
+    }
 
     public static void runningBook(Integer id)
     {
@@ -73,9 +85,16 @@ public class DuoKanService {
     }
 
 
+    public static Duokan getBookByName(String fileName) {
+
+        Duokan bean = null;
 
 
+        bean = DuokanDao.dao.getBean("select * from duokan where name = '" +fileName+
+                "'");
+
+        return bean;
 
 
-
+    }
 }

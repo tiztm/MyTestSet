@@ -21,6 +21,10 @@ public class Duokan {
 
     private String keyword;
 
+    private String catastring;
+
+    private Integer ord;
+
     public String getName() {
         return name;
     }
@@ -75,5 +79,21 @@ public class Duokan {
 
     public void setIsrunning(Integer isrunning) {
         this.isrunning = isrunning;
+    }
+
+    public String getCatastring() {
+        return catastring;
+    }
+
+    public void setCatastring(String catastring) {
+        this.catastring = catastring;
+    }
+
+    public Integer getOrd() {
+        return ord;
+    }
+
+    public void setOrd(Integer ord) {
+        this.ord = ord;
     }
 }

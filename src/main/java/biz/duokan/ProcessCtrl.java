@@ -5,6 +5,7 @@ import sun.jvmstat.monitor.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -20,16 +21,21 @@ public class ProcessCtrl {
 
         String curNum = stringStringMap.get("curNum");
 
+        String endTime = stringStringMap.get("endTime");
+
 
         int num = 2;
+        int endTimeInt = 20;
 
         try {
             num = Integer.parseInt(curNum);
+            endTimeInt = Integer.parseInt(endTime);
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
 
-        System.out.println(num);
+        System.out.println(num+" --- "+endTimeInt);
+
         while (true) {
 
             String nameFilter = "NativeInterface";
@@ -37,6 +43,19 @@ public class ProcessCtrl {
             List proList = printProcess(nameFilter);
 
             System.out.println("当前Java项目：" + proList.size());
+
+            Calendar now = Calendar.getInstance();
+
+            int i = now.get(Calendar.HOUR_OF_DAY);
+
+            if(proList.size() ==0 && i> endTimeInt)
+            {
+                //8点后无任务就关机
+                Runtime.getRuntime().exec("Shutdown -s");
+                return;
+            }
+
+
             if (proList.size() < num) {
                 String batFile = "1.抓取.bat";
                 startBat(batFile);
@@ -56,6 +75,30 @@ public class ProcessCtrl {
         System.out.println("启动:"+batFile);
 
     }
+
+
+    /**
+     * 根据间类型比较间
+     *
+     * @param source
+     * @param traget
+     * @param type "YYYY-MM-DD" "yyyyMMdd HH:mm:ss"  类型自定义
+     * @param 传递间比格式
+     * @return
+     *  0 ：sourcetraget间相同
+     *  1 ：source比traget间
+     *  -1：source比traget间
+     * @throws Exception
+     */
+    public static int DateCompare(String source, String traget, String type) throws Exception {
+        int ret = 2;
+        SimpleDateFormat format = new SimpleDateFormat(type);
+        Date sourcedate = format.parse(source);
+        Date tragetdate = format.parse(traget);
+        ret = sourcedate.compareTo(tragetdate);
+        return ret;
+    }
+
 
     private static List printProcess(String nameFilter) throws MonitorException, URISyntaxException {
 

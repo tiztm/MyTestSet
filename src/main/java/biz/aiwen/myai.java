@@ -102,7 +102,7 @@ public class myai {
 
         writer.close();
         //times = 1;
-        for (int i = 1; i < times+1; i++) {
+            for (int i = 1; i < times+1; i++) {
 
             StringBuffer log = new StringBuffer();
 

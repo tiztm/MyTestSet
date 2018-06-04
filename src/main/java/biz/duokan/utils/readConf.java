@@ -21,6 +21,14 @@ public class readConf {
     }
 
 
+    public static String getProByKey(String key)
+    {
+        Map<String, String> stringStringMap = readFileByLines();
+        return stringStringMap.get(key);
+    }
+
+
+
     public static Map<String,String> readFileByLines() {
         HashMap<String,String> waitMap = new HashMap<>();
 

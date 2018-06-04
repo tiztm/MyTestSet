@@ -6,9 +6,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.List;
 
 
 import javax.imageio.ImageIO;
@@ -23,10 +23,18 @@ import chrriis.dj.nativeswing.swtimpl.NativeInterface;
 import chrriis.dj.nativeswing.swtimpl.components.JWebBrowser;
 import chrriis.dj.nativeswing.swtimpl.components.WebBrowserAdapter;
 import chrriis.dj.nativeswing.swtimpl.components.WebBrowserEvent;
+import core.util.HTMLUtil;
+import db.dao.DuokanDao;
 import db.entity.Duokan;
 
 
 public class PrintDuokan extends JPanel {
+
+    /**
+     * 1：正常扫描书本
+     * 2：扫描书本的目录
+     */
+    public static  String workType = "1";
 
     private static final long serialVersionUID = 1L;
 
@@ -52,8 +60,10 @@ public class PrintDuokan extends JPanel {
 
     final static String BOOK_URL_BASE = "http://www.duokan.com/reader/www/app.html?id=";
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PrintDuokan.class);
 
-    static JWebBrowser webBrowser = new JWebBrowser(null);
+
+    final JWebBrowser webBrowser = new JWebBrowser(null);
 
     final static JCheckBox checkBox1 = new JCheckBox("完成后停止");// 创建复选按钮;
 
@@ -62,60 +72,33 @@ public class PrintDuokan extends JPanel {
     private static JFrame frame = null;
 
 
+    static String devString = "hd-";
+
     int countNowBookPage = 1;
-
     int allPageCount = 0;
-
     int allCount = 0;
-
     int errorCount = 0;
-
     private static int pause = 1;
-
     int speed = 0;
-
     int repeat = 0;
-
     int continueSuccess = 0;
-
     int prepare = 0;
+    int bookErrorCount = 0;
 
-
-    private static boolean isOK = false;
-
-
-    private JScrollPane rtmPanel() {
-
-
-        JScrollPane jScrollPane = new JScrollPane();
-        webBrowser.setPreferredSize(new Dimension(P_WID, P_HEIGHT));
-        //webBrowser.setSize(new Dimension(P_WID, P_HEIGHT));
-        webBrowser.setBarsVisible(true);
-        webBrowser.navigate("https://www.duokan.com/");
-        webBrowser.addWebBrowserListener(new WebBrowserAdapter() {
-                                             public void loadingProgressChanged(WebBrowserEvent e) {
-
-                                                 if (e.getWebBrowser().getLoadingProgress() < 100) {
-                                                     isOK = false;
-                                                     //logger.info("在加载："+e.getWebBrowser().getLoadingProgress() );
-                                                 }
-
-
-                                             }
-                                         }
-
-        );
-        jScrollPane.setViewportView(webBrowser);
-        return jScrollPane;
-    }
-
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PrintDuokan.class);
 
     private static int precentPre = 0;
     private static int precentCotinue = 0;
 
+    private static boolean isOK = false;
 
-    private Thread getThread() {
+    private static List<String> bookContList = new ArrayList<>();
+
+
+    /**
+     * 截图线程
+     * @return
+     */
+    private Thread makePrintThread() {
         return new Thread() {
             public void run() {
 
@@ -230,7 +213,7 @@ public class PrintDuokan extends JPanel {
                              *
                              * 5 - 存在购买页面
                              */
-                            int printResult = pringScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.countNowBookPage) + ".png", false);
+                            int printResult = printScreen(filePath + bookName + File.separator + String.format("%04d", PrintDuokan.this.countNowBookPage) + ".png", false);
 
                             allCount++;
 
@@ -270,14 +253,72 @@ public class PrintDuokan extends JPanel {
 
                             if (printResult == 0) {
 
+                                //扫描成功
+
                                 SwingUtilities.invokeLater(new Runnable() {
                                     public void run() {
                                         webBrowser.executeJavascript("$('.j-cancel').click();");
                                         webBrowser.executeJavascript("$('.j-close').click();");
 
                                         webBrowser.executeJavascript("$('.j-pagedown').click();");
+
+                                        String htmlContent = webBrowser.getHTMLContent();
+
+
+                                        java.util.List<String> patternString = HTMLUtil.getPatternString(htmlContent, "<svg xmlns=\"http://www.w3.org/2000/svg\".*?</svg>");
+
+//                                         得到文本信息
+//
+//                                        if(bookContList.size()==0)
+//                                        {
+//                                            bookContList = patternString;
+//                                        }
+//                                        else
+//                                        {
+//                                            String lastCont = bookContList.get(bookContList.size() - 1);
+//
+//                                            int beginPos = 0;
+//
+//                                            for (int i = patternString.size()-1; i > -1; i--) {
+//                                                String nowStr = patternString.get(i);
+//
+//                                                if(nowStr.equals(lastCont))
+//                                                {
+//                                                    beginPos = i;
+//                                                }
+//                                            }
+//
+//
+//                                            for(int i = beginPos+1;i<patternString.size();i++)
+//                                            {
+//                                                bookContList.add(patternString.get(i));
+//                                            }
+//
+//                                        }
+//
+//
+//
+//                                        for (String s : bookContList) {
+//
+//                                            //
+//
+//                                            s = s.replaceFirst("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"433\" height=\"577\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">",
+//                                                    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1016\" height=\"1364\" viewBox=\"0 0 433 577\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">");
+//
+//
+//                                            System.out.println(s);
+//                                        }
+
+
+
+
                                     }
                                 });
+
+
+
+
+
                                 countNowBookPage++;
                                 allPageCount++;
                                 repeat = 0;
@@ -312,6 +353,7 @@ public class PrintDuokan extends JPanel {
                                 SwingUtilities.invokeLater(new Runnable() {
                                     public void run() {
                                         webBrowser.executeJavascript(" $('.u-btn-retry').click();");
+
                                     }
                                 });
 
@@ -361,13 +403,22 @@ public class PrintDuokan extends JPanel {
                                             webBrowser.executeJavascript("$(window).unbind('beforeunload');");
                                             webBrowser.executeJavascript(" window.onbeforeunload = null;");
 
-                                            webBrowser.navigate("https://www.duokan.com/");
+                                            webBrowser.navigate("http://www.duokan.com/");
 
                                         }
                                     });
 
 
                                     if (countNowBookPage < 3) {
+
+                                        bookErrorCount++;
+
+                                        if(bookErrorCount>10)
+                                        {
+                                            Thread.sleep(2000);
+                                            System.exit(0);
+                                        }
+
 
                                         prepare = 0;
                                         countNowBookPage = 1;
@@ -413,7 +464,90 @@ public class PrintDuokan extends JPanel {
     }
 
 
-    public static int[] getData(BufferedImage name) throws Exception {
+    private Thread makeCataThread() {
+        return new Thread() {
+            public void run() {
+
+
+                try {
+
+                    Thread.sleep(20000);
+
+
+
+                    Duokan duokanBook = DuoKanService.rtnNextCataWaitBook();
+
+
+                    while (duokanBook != null) {
+
+
+
+                        String bookId = duokanBook.getUrl() + "";
+                        final String url = BOOK_URL_BASE + bookId;
+
+
+                        SwingUtilities.invokeAndWait(new Runnable() {
+                            public void run() {
+
+                                webBrowser.executeJavascript("$(window).bind('beforeunload');");
+                                webBrowser.executeJavascript(" window.onbeforeunload = null;");
+
+                                webBrowser.navigate(url);
+
+                            }
+                        });
+
+
+
+
+                        String bookName = duokanBook.getName();
+
+                        logger.info(Thr_ID + "-" + "目录：" + bookName);
+                        frame.setTitle("目录：" + bookName);
+                        String trim = "";
+
+                        while (true) {
+                            Thread.sleep(3000);
+
+                            trim = rtnCataString().trim();
+                            if (!trim.contains("目录内容")) {
+
+                                break;
+                            }
+                        }
+
+                        duokanBook.setCatastring(trim.replaceAll("'","\""));
+                        DuokanDao.dao.update(duokanBook);
+
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                webBrowser.executeJavascript("$(window).unbind('beforeunload');");
+                                webBrowser.executeJavascript(" window.onbeforeunload = null;");
+
+                                webBrowser.navigate("http://www.duokan.com/");
+
+                            }
+                        });
+
+                        Thread.sleep(3000);
+                        duokanBook = DuoKanService.rtnNextCataWaitBook();
+
+
+
+                    }
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+
+
+        };
+    }
+
+
+    private static int[] getData(BufferedImage name) throws Exception {
         BufferedImage slt = name;
         //ImageIO.write(slt,"jpeg",new File("slt.jpg"));
         int[] data = new int[slt.getWidth() * slt.getHeight() / 16];
@@ -466,11 +600,9 @@ public class PrintDuokan extends JPanel {
     }
 
 
-    private static void paintNow() throws IOException {
+    private void paintNow() throws IOException {
         String filePath = "d://" + new Date().getTime() + ".png";
-
-
-        pringScreen(filePath, true);
+        printScreen(filePath, true);
     }
 
 
@@ -484,7 +616,7 @@ public class PrintDuokan extends JPanel {
      * 3 - 与重新刷新图片相同
      * @throws IOException
      */
-    private static int pringScreen(String fileName, boolean onlyPrint) throws IOException {
+    private int printScreen(String fileName, boolean onlyPrint) throws IOException {
         NativeComponent nativeComponent = webBrowser
                 .getNativeComponent();
         Dimension imageSize = new Dimension();
@@ -577,8 +709,31 @@ public class PrintDuokan extends JPanel {
         return 0;
     }
 
+    static  String cataString ;
 
-    static String devString = "hd-";
+    private String rtnCataString() throws InvocationTargetException, InterruptedException {
+
+
+        SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+
+                cataString = webBrowser.getHTMLContent();
+
+            }
+        });
+
+
+
+        cataString=cataString.replaceAll("\n", "").replaceAll("\r", "");
+
+        String betweenString = "<div class=\"rd_dirct"+HTMLUtil.getBetweenString(cataString, "rd_dirct", "<div class=\"rd_bookmark");
+
+        return betweenString;
+
+
+    }
+
+
 
     public static void main(String[] args) throws Exception {
 
@@ -591,6 +746,13 @@ public class PrintDuokan extends JPanel {
         if (stringStringMap.get("containerMain") != null && stringStringMap.get("containerMain").length() > 0) {
             isContinue = stringStringMap.get("containerMain");
         }
+
+        if (stringStringMap.get("workType") != null && stringStringMap.get("workType").length() > 0) {
+            workType = stringStringMap.get("workType");
+        }
+
+
+
 
         String testModeString = stringStringMap.get("testMode");
 
@@ -634,30 +796,37 @@ public class PrintDuokan extends JPanel {
 
                 final PrintDuokan test = new PrintDuokan();
 
-                JScrollPane jp = test.rtmPanel();
+                JScrollPane jp = test.makePanel();
 
-                JPanel southPanel = rtmCtrlPanel(test);
+                JPanel southPanel = makeCtrlPanel(test);
 
 
                 frame.getContentPane().add(jp, BorderLayout.CENTER);
                 frame.getContentPane().add(southPanel, BorderLayout.NORTH);
-
                 frame.setSize(800, 600);
-                //frame.setResizable(false);
-//                frame.invalidate();
-//                frame.pack();
                 frame.setVisible(true);//设置是否可见
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//使能关闭窗口，结束程序
 
-                webBrowser.getNativeComponent().requestFocus();
+                test.webBrowser.getNativeComponent().requestFocus();
 
 
-                Thread t = test.getThread();
-                t.start();
+                if(workType.endsWith("1")) {
+
+
+
+                    Thread t = test.makePrintThread();
+                    t.start();
+
+                }else if(workType.endsWith("2")) {
+                    Thread t = test.makeCataThread();
+                    t.start();
+                }
 
                 logger.info(Thr_ID + "-" + "---------------end----------");
             }
         });
+
+
 
         Thread t2 = new Thread() {
             public void run() {
@@ -666,18 +835,49 @@ public class PrintDuokan extends JPanel {
         };
         t2.start();
 
+
+
         NativeInterface.runEventPump();
 
 
     }
 
-    public static JPanel rtmCtrlPanel(final PrintDuokan test) {
+
+    /**
+     * 页面构建
+     * @return
+     */
+    private JScrollPane makePanel() {
+
+        JScrollPane jScrollPane = new JScrollPane();
+        webBrowser.setPreferredSize(new Dimension(P_WID, P_HEIGHT));
+        webBrowser.setBarsVisible(true);
+        webBrowser.navigate("http://www.duokan.com/");
+        webBrowser.addWebBrowserListener(new WebBrowserAdapter() {
+                                             public void loadingProgressChanged(WebBrowserEvent e) {
+                                                 if (e.getWebBrowser().getLoadingProgress() < 100) {
+                                                     isOK = false;
+                                                 }
+                                             }
+                                         }
+        );
+        jScrollPane.setViewportView(webBrowser);
+        return jScrollPane;
+    }
+
+
+
+    /**
+     * 页面构建
+     * @return
+     */
+    public static JPanel makeCtrlPanel(final PrintDuokan test) {
         JPanel southPanel = new JPanel();
         JButton setCustomButton = new JButton("开始扫描");
         setCustomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                Thread t = test.getThread();
+                Thread t = test.makePrintThread();
                 t.start();
 
                 //setCustomButton.setVisible(false);
@@ -685,19 +885,33 @@ public class PrintDuokan extends JPanel {
             }
         });
 
-        //southPanel.setBorder(BorderFactory.createTitledBorder("自定义"));
         JButton justPantBtn = new JButton("截图");
         justPantBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
                 try {
-                    paintNow();
-                } catch (IOException e1) {
+                    test.paintNow();
+                } catch (Exception e1) {
                     e1.printStackTrace();
                 }
 
             }
         });
+
+
+        JButton cataBtn = new JButton("获取目录");
+        cataBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    System.out.println(test.rtnCataString());
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+        });
+
 
         checkBox1.setSelected((isContinue == null || isContinue.equals("0")) ? true : false);
 
@@ -728,13 +942,16 @@ public class PrintDuokan extends JPanel {
             }
         });
 
-
+        southPanel.add(cataBtn);
         southPanel.add(justPantBtn);
         southPanel.add(checkBox2);
         southPanel.add(checkBox1);
         return southPanel;
     }
 
+    /**
+     * 缩放到200%
+     */
     public static void autoZoom() {
         try {
 

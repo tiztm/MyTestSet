@@ -16,15 +16,17 @@ import java.util.List;
  */
 public class SearchDuokanBookIntoDB {
 
-    private static  final  String book_start_url="http://www.duokan.com/search/";
 
 
+    private  static String keyword = "Java";
+
+    private static  int bookNeed = 59;
+
+
+    private static final String book_start_url="http://www.duokan.com/search/";
 
     private static final int bookPerPage = 6;
 
-    private  static  final  String keyword = "黑客与画家";
-
-    private static final int bookNeed = 1;
 
     private  static  final int fiPage = bookNeed/bookPerPage+1;
 
@@ -53,7 +55,7 @@ public class SearchDuokanBookIntoDB {
             for (String s1 : patternString) {
                 String id = HTMLUtil.getBetweenString(s1, "data-id=\"", "\"><div");
                 String name = HTMLUtil.getBetweenString(s1, " alt=\"", "\" ondragstart");
-                storeBook(id, name,keyword);
+                storeBook(id, name,keyword,0);
                 bookCount++;
                 if(bookCount>=bookNeed) System.exit(0);
             }
@@ -63,7 +65,7 @@ public class SearchDuokanBookIntoDB {
         }
     }
 
-    public static void storeBook(String id, String name,String key) {
+    public static void storeBook(String id, String name,String key,int ord) {
         System.out.println(id+"-"+name);
 
         Duokan bean = DuokanDao.dao.getBean("select * from duokan where url='" + id + "';");

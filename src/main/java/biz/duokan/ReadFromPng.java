@@ -17,28 +17,48 @@ import java.io.FileNotFoundException;
  */
 public class ReadFromPng {
 
-    private static String  fileName = "D://0002.png";
+    private static String  fileName = "D://0003.png";
+
+    public static String fileDirPath = "D:\\test\\我的应许之地：以色列的荣耀与悲情";
 
     public static void main(String[] args) throws Exception {
-        File imageFile = new File(fileName);
-        String s = readFromImg(imageFile);
-        System.out.println(s);
+
+//        File basePath = new File(fileDirPath);
+//        String[] dirList = basePath.list();
+//
+//        for (String s : dirList) {
+//            File nowDirPdf = new File(fileDirPath+File.separator+s);
+//            String out = readFromImg(nowDirPdf);
+//            System.out.println(out);
+//        }
+        File nowDirPdf = new File( fileName);
+        String out = readFromImg(nowDirPdf);
+        System.out.println(out);
+
+
+
+
     }
 
+    static Tesseract instance =  new Tesseract();
+
+    static File tessDataFolder = new File("D:\\tessdata");
+
+    static
+    {
+        instance.setDatapath(tessDataFolder.getAbsolutePath());
+        instance.setLanguage("chi_sim");
+    }
 
     /**
-     * 分辨率过低无法识别
+     * 识别文字
      * @param read
      * @return
      * @throws TesseractException
      */
     private static String readFromImg(File read) throws TesseractException {
 
-        Tesseract instance =  new Tesseract();
 
-        File tessDataFolder = new File("D:\\tessdata");
-        instance.setDatapath(tessDataFolder.getAbsolutePath());
-        instance.setLanguage("chi_sim");
 
         ///instance.set
         String result = "";
