@@ -178,7 +178,7 @@ public class ReadJARForMaven {
         ReadJARForMaven rx = new ReadJARForMaven();
 
         List<String> contentList = rx.getJarNameByPath("" +
-                "D:\\JavaWork\\.metadata\\.plugins\\org.eclipse.wst.server.core\\tmp0\\wtpwebapps\\platform\\WEB-INF\\lib");
+                "D:\\JavaWork\\开发平台分支 - 无工作流\\platform\\WebRoot\\WEB-INF\\lib");
 
 
         String newFilePath = "D:\\out"+System.currentTimeMillis()+".xml";
