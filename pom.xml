@@ -108,6 +108,48 @@
         <version>3.1</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.apache.cxf/cxf-core -->
+    <dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-core</artifactId>
+        <version>3.2.5</version>
+    </dependency>
+
+
+    <!-- https://mvnrepository.com/artifact/org.apache.cxf/cxf-rt-frontend-jaxws -->
+    <dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-rt-frontend-jaxws</artifactId>
+        <version>3.2.5</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.axis2</groupId>
+        <artifactId>axis2</artifactId>
+        <version>1.5.1</version>
+        <type>pom</type>
+        <scope>compile</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.axis2</groupId>
+        <artifactId>axis2-adb</artifactId>
+        <version>1.5.1</version>
+        <type>jar</type>
+        <scope>compile</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.axis2</groupId>
+        <artifactId>axis2-kernel</artifactId>
+        <version>1.5.1</version>
+        <type>jar</type>
+        <scope>compile</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.axis2</groupId>
+        <artifactId>org.apache.axis2.osgi</artifactId>
+        <version>1.5.1</version>
+    </dependency>
+
     <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
