@@ -27,5 +27,7 @@ public class MailResize {
             System.out.print(betweenString+",");
             i++;
         }
+
+        System.out.print(i);
     }
 }
